@@ -8,7 +8,7 @@ e o áudio é copiado bit a bit. Toda a edição é enquadramento, cortes e cama
 
 ```bash
 ./preparar.sh "https://www.tiktok.com/@kvashenayakto/video/7562654671328890124"
-./renderizar.sh          # gera saida/reel.mp4 (85 s) e saida/story.mp4 (15 s)
+./renderizar.sh          # gera saida/reel.mp4 (85 s), saida/story.mp4 (15 s) e saida/tiktok_viral.mp4 (~40 s)
 PREVIEW="0.8,20,53" python3 mv.py entrada/v.mp4 previa   # confere quadros sem renderizar tudo
 ```
 
@@ -29,3 +29,12 @@ PREVIEW="0.8,20,53" python3 mv.py entrada/v.mp4 previa   # confere quadros sem r
 | Final | Título, créditos e chamada "Qual parte te arrepiou?" | `ENDCARD` |
 
 Antes de postar, troque `@SEU_PERFIL` pelo seu @ e peça autorização à criadora original.
+
+## Corte viral TikTok (`viral.py`, ~40 s)
+
+- Trechos escolhidos nas respirações dela (`SEGMENTS`): abertura → sorriso → clímax → refrão.
+- O vídeo termina na mesma frase em que começa ("voa nas asas do vento"), então o loop fica natural.
+- Gancho em caixa de texto no estilo do TikTok + "espera o 0:22", que segura a atenção até o clímax.
+- Legenda palavra por palavra no estilo CapCut (Montserrat Black, palavra ativa em amarelo).
+- Cortes de câmera a cada ~2 s, zoom contínuo até o clímax, "AQUI." no ponto alto.
+- Chamada final "salva pra ouvir de novo" (salvamentos pesam no algoritmo) + crédito da voz.
