@@ -213,7 +213,12 @@ def build_card(c):
         if "♥" in l:
             col, glowc = PINK, PINK
         lines.append((l, f, col, glowc))
-    built = [make_line(*x) for x in lines]
+    fitted = []
+    for text, f, col, gc in lines:  # encolhe a fonte até a linha caber na tela
+        while f.getbbox(text)[2] - f.getbbox(text)[0] > W - 140 and f.size > 30:
+            f = font(f.path, f.size - 4)
+        fitted.append((text, f, col, gc))
+    built = [make_line(*x) for x in fitted]
     gap = -26
     total_h = sum(b["h"] for b in built) + gap * (len(built) - 1)
     y = (H - total_h) / 2
