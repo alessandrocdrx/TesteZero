@@ -51,4 +51,5 @@ w = wave.open("_trilha_seca.wav", "wb"); w.setnchannels(2); w.setsampwidth(2); w
 w.writeframes((np.clip(st, -1, 1) * 32767).astype(np.int16).tobytes()); w.close()
 subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", "_trilha_seca.wav", "-af",
   "aecho=0.8:0.75:90|210|370:0.35|0.25|0.15,lowpass=f=5000,loudnorm=I=-18", "-b:a", "192k", "trilha.mp3"], check=True)
+import os; os.remove("_trilha_seca.wav")
 print("ok", round(dur, 1))
