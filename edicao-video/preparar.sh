@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Instala dependências, baixa fontes e o vídeo, e transcreve o áudio.
+# Uso: ./preparar.sh "https://www.tiktok.com/@perfil/video/ID"
+set -euo pipefail
+cd "$(dirname "$0")"
+pip install -q "yt-dlp[curl-cffi]" faster-whisper opencv-python-headless pillow numpy
+mkdir -p fonts entrada
+for f in anton/Anton-Regular.ttf archivoblack/ArchivoBlack-Regular.ttf; do
+  [ -f "fonts/$(basename $f)" ] || curl -sSfL -o "fonts/$(basename $f)" "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/$f"
+done
+python3 -m yt_dlp --impersonate chrome -o "entrada/v.%(ext)s" "$1"
+ffmpeg -loglevel error -y -i entrada/v.mp4 -ac 1 -ar 16000 entrada/a.wav
+python3 transcrever.py entrada/a.wav > entrada/transcricao.txt
+cat entrada/transcricao.txt
