@@ -1,10 +1,11 @@
-# Desafio Samuel: Documento do Projeto v0 (16/10/2026)
+# Desafio Samuel: Documento do Projeto v1 (16/10/2026)
 
 ## 1. Visão
 
 - **Problema:** ainda não definido. O Samuel vai propor.
 - **Para quem:** a definir.
-- **Métrica de sucesso:** a definir.
+- **Métrica de sucesso:** a definir, ligada a um objetivo de mercado do Samuel (mais clientes, mais vendas ou mais visibilidade).
+- **Objetivo do Alessandro:** impressionar. Entregar algo que gere resultado visível para o negócio dele.
 - **Origem:** o Samuel convidou o Alessandro para visitar o espaço dele no Nex (Batel, Curitiba). A visita virou um desafio: o Samuel propõe uma solução de tecnologia (app, site, sistema ou automação), o Alessandro desenvolve e coloca para rodar, sem compromisso de prazo.
 
 ## 2. Mapa de entendimento
@@ -21,6 +22,8 @@
 - P3. O Samuel é quem decide e aprova as entregas.
 - P4. Não há verba de desenvolvimento (desafio entre amigos). O custo mensal de infraestrutura deve ficar perto de zero ou ser pago pelo Samuel.
 - P5. O MVP precisa caber em tamanho P (até 2 semanas de trabalho), porque é um projeto paralelo.
+- P6. O Samuel não é cliente. A conversa é informal: poucas perguntas, simples e diretas.
+- P7. O foco é um objetivo de mercado (atrair, converter ou fidelizar clientes), não uma ferramenta interna.
 
 ### Lacunas
 | ID | Lacuna | Risco |
@@ -29,6 +32,8 @@
 | L2 | O que a empresa do Samuel faz | Alto |
 | L3 | Quem vai usar e quantas pessoas | Alto |
 | L4 | Como saber que deu certo (métrica) | Alto |
+| L8 | Qual o objetivo de mercado principal: atrair, vender ou fidelizar | Alto |
+| L9 | Onde os clientes dele estão hoje (Instagram, Google, indicação) | Médio |
 | L5 | Quem paga contas e infraestrutura e quem fica dono do sistema | Médio |
 | L6 | Se envolve dados pessoais de clientes (LGPD) | Médio |
 | L7 | Se usa algum sistema ou planilha que precisa conversar com o novo | Médio |
@@ -66,3 +71,4 @@ Nenhuma ainda.
 | Versão | Data | O que mudou |
 |---|---|---|
 | v0 | 16/10/2026 | Triagem inicial a partir da conversa de WhatsApp |
+| v1 | 16/10/2026 | Samuel não é cliente e o objetivo é impressionar. Foco em objetivo de mercado e rodada 1 reduzida a 4 perguntas. L5, L6 e L7 ficam para depois da ideia escolhida |
