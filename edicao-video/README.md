@@ -1,4 +1,14 @@
-# Edição "Voa nas asas do vento": reel + story
+# Edição "Voa nas asas do vento"
+
+**Versão principal: `calmo.py`.** É o take dela inteiro, sem cortes na música, sem filtro e com a cor original.
+- Tradução poética em PT-BR, com a letra em russo em cima, em serifa de cinema (Cormorant Garamond).
+- Uma linha de contexto na abertura.
+- Uma única virada no clímax: a legenda some, as bordas escurecem e a câmera se aproxima no máximo 7%.
+- Créditos no final.
+
+As versões `mv.py` (MV pop) e `viral.py` (corte TikTok) ficaram como experimentos anteriores.
+
+## Experimentos anteriores: reel + story
 
 Edição em estilo de MV pop/K-pop a partir do vídeo a cappella de @kvashenayakto.
 **Regra do projeto:** a imagem e a voz dela não são alteradas. Nada de filtro no rosto,

@@ -20,3 +20,8 @@ done
 ffmpeg -loglevel error -y -i entrada/v.mp4 -filter_complex "${f}${parts}concat=n=$i:v=0:a=1[a]" -map "[a]" -c:a aac -b:a 192k saida/viral_audio.m4a
 ffmpeg -loglevel error -y -i saida/viral_sem_audio.mp4 -i saida/viral_audio.m4a -map 0:v -map 1:a -c copy -movflags +faststart saida/tiktok_viral.mp4
 echo "Pronto: saida/tiktok_viral.mp4"
+
+# Versão principal: o take inteiro, intacto, com tipografia de cinema (voz copiada sem recodificar)
+python3 calmo.py entrada/v.mp4 saida/calmo_sem_audio.mp4
+ffmpeg -loglevel error -y -i saida/calmo_sem_audio.mp4 -i entrada/v.mp4 -map 0:v -map 1:a -c copy -movflags +faststart saida/voa_nas_asas_do_vento.mp4
+echo "Pronto: saida/voa_nas_asas_do_vento.mp4"
