@@ -1,0 +1,62 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+WrapStyle: 2
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Leg,Liberation Sans,86,&H00FFFFFF,&H90FFFFFF,&H005C2440,&H90301430,1,0,0,0,100,100,1,0,1,7,4,2,60,60,200,1
+Style: Big,Liberation Serif,190,&H00FFFFFF,&H00FFFFFF,&H005C2440,&H80000000,1,1,0,0,100,100,4,0,1,9,6,5,40,40,0,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 1,0:00:00.72,0:00:01.94,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf76}Nij.
+Dialogue: 1,0:00:01.96,0:00:03.76,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k8}{\kf39}Leram {\kf18}teu {\kf32}nome \N{\kf17}da {\kf55}esquerda {\kf18}pra
+Dialogue: 1,0:00:03.78,0:00:05.98,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k8}{\kf71}direita. {\k13}{\kf24}E {\kf29}acharam \N{\kf28}que {\kf33}sabiam {\kf20}quem
+Dialogue: 1,0:00:06.00,0:00:06.98,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k8}{\kf35}você {\kf26}era.
+Dialogue: 1,0:00:07.00,0:00:08.58,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k8}{\kf13}Mas {\kf37}você {\kf52}sempre \N{\kf29}soube {\kf16}que {\kf9}a
+Dialogue: 1,0:00:08.60,0:00:10.14,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k8}{\kf36}verdade {\kf27}se {\kf12}lê \N{\kf24}do {\kf33}jeito {\kf21}que
+Dialogue: 1,0:00:10.16,0:00:11.52,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k8}{\kf17}o {\kf30}coração {\kf51}espera.
+Dialogue: 1,0:00:11.54,0:00:13.10,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k8}{\kf45}Jin, {\k38}{\kf40}diziam.
+Dialogue: 1,0:00:13.12,0:00:14.52,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k8}{\kf40}Ouro, {\k23}{\kf44}metal,
+Dialogue: 1,0:00:14.54,0:00:15.72,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k8}{\kf29}brilho {\kf64}guardado.
+Dialogue: 1,0:00:15.74,0:00:17.00,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k8}{\kf23}Você {\kf30}virou {\kf21}o {\kf40}espelho.
+Dialogue: 1,0:00:17.02,0:00:18.52,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf12}E {\kf17}o {\kf21}ouro {\kf60}respondeu.
+Dialogue: 1,0:00:18.54,0:00:20.52,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf50}Nij. {\k19}{\kf10}Que {\kf19}numa \N{\kf39}língua {\kf40}antiga {\kf19}quer
+Dialogue: 1,0:00:20.54,0:00:21.98,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf53}dizer {\kf51}nova.
+Dialogue: 1,0:00:22.00,0:00:23.82,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf19}Nova {\kf21}não {\kf30}porque \N{\kf37}nasceu {\kf24}de {\kf27}novo,
+Dialogue: 1,0:00:23.84,0:00:25.52,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf19}mas {\kf32}porque {\kf50}enfim \N{\kf48}nasceu {\kf14}o {\kf8}que
+Dialogue: 1,0:00:25.54,0:00:26.30,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf21}era {\kf26}seu.
+Dialogue: 1,0:00:26.32,0:00:27.64,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf21}Tem {\kf21}o {\kf17}azul {\kf30}do {\kf21}céu {\kf20}de
+Dialogue: 1,0:00:27.66,0:00:29.38,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf21}quem {\kf44}aprendeu \N{\kf16}a {\kf35}voar {\kf55}sozinha.
+Dialogue: 1,0:00:29.40,0:00:31.62,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf35}O {\kf35}rosa {\kf24}da {\kf50}coragem \N{\kf21}que {\kf56}floresce
+Dialogue: 1,0:00:31.64,0:00:33.04,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf23}sem {\kf28}pedir {\kf63}licença.
+Dialogue: 1,0:00:33.06,0:00:33.86,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf8}E {\kf21}no {\kf30}meio,
+Dialogue: 1,0:00:33.88,0:00:34.68,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf18}o {\kf45}branco.
+Dialogue: 1,0:00:34.70,0:00:36.32,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf14}A {\kf34}página {\kf25}em \N{\kf28}branco {\kf17}onde {\kf43}você
+Dialogue: 1,0:00:36.34,0:00:38.04,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf30}escreve {\kf23}a \N{\kf30}própria {\kf64}sentença.
+Dialogue: 1,0:00:38.06,0:00:39.46,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf15}E {\kf20}aí {\kf19}eu {\kf24}te {\kf38}leio.
+Dialogue: 1,0:00:39.48,0:00:41.66,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf39}Ninja. {\k30}{\kf24}Porque \N{\kf39}ninguém {\kf24}viu {\kf23}o {\kf26}treino.
+Dialogue: 1,0:00:41.68,0:00:42.80,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf28}Só {\kf19}a {\kf46}chegada.
+Dialogue: 1,0:00:42.82,0:00:44.36,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf28}Cada {\kf35}passo {\kf25}no \N{\kf29}escuro {\kf17}foi {\kf17}um
+Dialogue: 1,0:00:44.38,0:00:45.54,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf24}golpe {\kf78}certeiro.
+Dialogue: 1,0:00:45.56,0:00:46.34,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf23}Contra {\kf16}o {\kf19}medo,
+Dialogue: 1,0:00:46.36,0:00:47.44,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf33}contra {\kf20}a {\kf38}dúvida,
+Dialogue: 1,0:00:47.46,0:00:48.46,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf23}contra {\kf22}o {\kf27}nada.
+Dialogue: 1,0:00:48.48,0:00:49.86,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf24}Você {\kf29}não {\kf22}se {\kf51}escondeu.
+Dialogue: 1,0:00:49.88,0:00:51.06,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf24}Você {\kf21}se {\kf56}lapidou.
+Dialogue: 1,0:00:51.08,0:00:52.38,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf20}Não {\kf59}fugiu.
+Dialogue: 1,0:00:52.40,0:00:53.58,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf47}Atravessou. {\k12}{\kf19}E {\kf30}hoje,
+Dialogue: 1,0:00:53.60,0:00:54.88,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf21}quando {\kf8}o {\kf29}mundo \N{\kf36}tenta {\kf17}te {\kf15}ler
+Dialogue: 1,0:00:54.90,0:00:56.46,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf46}errado, {\k33}{\kf22}você {\kf43}sorri.
+Dialogue: 1,0:00:56.48,0:00:57.90,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf26}Porque {\kf37}já {\kf21}sabe {\kf28}quem {\kf30}é.
+Dialogue: 1,0:00:57.92,0:00:59.96,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf75}Nij. {\k39}{\kf29}Nova.
+Dialogue: 1,0:00:59.98,0:01:02.52,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf44}Inteira. {\k23}{\kf24}Ouro {\kf28}de \N{\kf24}trás {\kf33}para {\kf35}frente.
+Dialogue: 1,0:01:02.54,0:01:05.92,Leg,,0,0,0,,{\fad(120,150)\fscx92\fscy92\t(0,160,\fscx100\fscy100)}{\k7}{\kf43}Mulher. {\k16}{\kf19}Do {\kf30}jeito \N{\kf32}que {\kf37}sempre {\kf29}foi.
+Dialogue: 2,0:00:00.75,0:00:01.90,Big,,0,0,0,,{\fad(150,350)\fscx70\fscy70\t(0,220,\fscx108\fscy108)\t(220,420,\fscx100\fscy100)\blur1}Nij
+Dialogue: 2,0:00:11.57,0:00:14.22,Big,,0,0,0,,{\fad(150,350)\fscx70\fscy70\t(0,220,\fscx108\fscy108)\t(220,420,\fscx100\fscy100)\blur1}JIN
+Dialogue: 2,0:00:18.57,0:00:21.62,Big,,0,0,0,,{\fad(150,350)\fscx70\fscy70\t(0,220,\fscx108\fscy108)\t(220,420,\fscx100\fscy100)\blur1}NIJ
+Dialogue: 2,0:00:39.51,0:00:41.96,Big,,0,0,0,,{\fad(150,350)\fscx70\fscy70\t(0,220,\fscx108\fscy108)\t(220,420,\fscx100\fscy100)\blur1}Ninja
+Dialogue: 2,0:00:57.95,0:00:59.00,Big,,0,0,0,,{\fad(150,350)\fscx70\fscy70\t(0,220,\fscx108\fscy108)\t(220,420,\fscx100\fscy100)\blur1}Nij.
+Dialogue: 2,0:01:02.57,0:01:04.82,Big,,0,0,0,,{\fad(150,350)\fscx70\fscy70\t(0,220,\fscx108\fscy108)\t(220,420,\fscx100\fscy100)\blur1}Mulher.
