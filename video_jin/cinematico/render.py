@@ -36,7 +36,7 @@ def ease(x):
 yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
 COLS = np.array([BLUE, PINK, WHITE, PINK, BLUE], np.float32) / 255
 cx, cy = w / 2, h / 2
-vign = 1 - 0.55 * (((xx - cx) / w) ** 2 + ((yy - cy) / h) ** 2) * 2.2
+vign = 1 - 0.40 * (((xx - cx) / w) ** 2 + ((yy - cy) / h) ** 2) * 2.2
 vign = np.clip(vign, 0.25, 1)[..., None]
 text_shade = np.exp(-(((xx - cx) / (w * 0.55)) ** 2 + ((yy - cy) / (h * 0.28)) ** 2))[..., None]
 ray_ang = np.arctan2(yy + 120, xx - w * 0.15)
@@ -125,7 +125,7 @@ def background(t, text_presence):
     ph2 = X / 33 - t * 2.0
     off = 10 * np.sin(ph) + 4 * np.sin(ph2)
     idx = np.clip(((Y + off) / h * 5).astype(np.int32), 0, 4)
-    img = COLS[idx] * (1 + 0.11 * np.cos(ph) + 0.05 * np.cos(ph2))[..., None]
+    img = COLS[idx] * 1.04 * (1 + 0.11 * np.cos(ph) + 0.05 * np.cos(ph2))[..., None]
     if flipk != 1.0:
         img = img * ((Y >= 0) & (Y < h))[..., None] * (0.55 + 0.45 * abs(flipk))
     # raios de luz
@@ -136,7 +136,7 @@ def background(t, text_presence):
     leak = np.exp(-((xx - lx) ** 2 + (yy - ly) ** 2) / (2 * (w * 0.45) ** 2))
     img += leak[..., None] * np.array([.25, .12, .16], np.float32)
     # escurece o centro quando há texto (legibilidade, clima de cinema)
-    img *= 1 - text_presence * (0.36 + 0.42 * text_shade)
+    img *= 1 - text_presence * (0.06 + 0.40 * text_shade)
     for b in bokeh:
         y = (b["y"] - b["v"] * t) % (h + 80) - 40
         x = b["x"] + 12 * math.sin(t * 0.3 + b["ph"])
@@ -243,8 +243,8 @@ def draw_text(frame, t):
                 continue
             reg = frame[y0:y1, x0:x1]
             alpha = (b["sharp"] * m + b["blur"] * (1 - m)) * a
-            reg *= (1 - 0.85 * b["shadow"][..., None] * a)
-            reg += b["glow"][..., None] * b["glowc"] * a * (0.55 + 0.9 * flare + 0.8 * pulse)
+            reg *= (1 - 0.60 * b["glow"][..., None] * a) * (1 - 0.85 * b["shadow"][..., None] * a)
+            reg += b["glow"][..., None] * b["glowc"] * a * (0.25 + 0.8 * flare + 0.7 * pulse)
             reg[:] = reg * (1 - alpha[..., None]) + b["color"] * alpha[..., None]
 
 
@@ -257,14 +257,14 @@ def text_presence(t):
 
 # ---------- grão de filme ----------
 rng = np.random.default_rng(3)
-grains = [rng.normal(0, 0.022, (h, w, 1)).astype(np.float32) for _ in range(8)]
+grains = [rng.normal(0, 0.010, (h, w, 1)).astype(np.float32) for _ in range(8)]
 
 end_t = preview if preview else total
 cmd = ["ffmpeg", "-y", "-v", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
        "-r", str(FPS), "-i", "-", "-i", audio,
        "-filter_complex", f"[1:a]apad,afade=t=out:st={total - 2.5}:d=2.5[a]",
        "-map", "0:v", "-map", "[a]", "-t", f"{end_t:.2f}",
-       "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p",
+       "-c:v", "libx264", "-preset", "medium", "-crf", "24", "-tune", "film", "-pix_fmt", "yuv420p",
        "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", out]
 p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
 nframes = int(end_t * FPS)
