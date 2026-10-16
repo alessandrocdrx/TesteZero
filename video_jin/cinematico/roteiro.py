@@ -24,8 +24,8 @@ B = [
  dict(lines=["Você é mulher."], kind="big", fx="heart"),
  dict(lines=["E de qualquer lado", "que o mundo olhe…"], fx="flip"),
  dict(lines=["você está certa."], kind="big", italic=True, fx="burst"),
- dict(lines=["Pesquise com carinho:", "Monica Helms", "Marsha P. Johnson", "Sylvia Rivera", "29 de janeiro", "Erika Hilton", "Duda Salabert"], kind="end"),
  dict(lines=["Com amor. ♥"], kind="big", italic=True, fx="burst"),
+ dict(lines=["Pesquise com carinho:", "Monica Helms", "Marsha P. Johnson", "Sylvia Rivera", "29 de janeiro", "Erika Hilton", "Duda Salabert"], kind="end"),
 ]
 t = 1.5; out = []
 for b in B:

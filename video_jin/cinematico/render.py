@@ -1,4 +1,4 @@
-"""Vídeo cinematográfico na bandeira trans.
+"""Vídeo cinematográfico na bandeira trans (legendas sincronizadas pela voz).
 
 Efeitos: bandeira em tecido ondulando com luz, zoom lento, raios de luz, bokeh,
 brilhos cintilantes, corações subindo, explosões de luz, giro da bandeira
@@ -96,7 +96,7 @@ stars = [dict(x=random.uniform(30, w - 30), y=random.uniform(h * .2, h * .8), s=
 star_spr = {s: sprite_star(s) for s in (10, 14, 20)}
 
 # eventos ao longo do tempo
-bursts = [c["start"] for c in cards if c.get("fx") == "burst"]
+bursts = [c["start"] for c in cards if c.get("fx") == "burst"] + [x for c in cards for x in c.get("burst_at", [])]
 flips = [c["start"] for c in cards if c.get("fx") == "flip"]
 hearts_fx = [(c["start"], c["end"]) for c in cards if c.get("fx") == "heart"]
 
@@ -156,7 +156,7 @@ def background(t, text_presence):
             k = ease((d + 0.3) / 0.3) * math.exp(-max(0, d) * 2.2)
             r = w * (0.25 + 0.9 * max(0, d))
             glow = np.exp(-((xx - cx) ** 2 + (yy - cy) ** 2) / (2 * r * r))
-            img += glow[..., None] * k * np.array([1, .93, .97], np.float32) * 1.1
+            img += glow[..., None] * k * np.array([1, .93, .97], np.float32) * 0.65
     img += heartbeat(t) * 0.07
     img *= vign
     return img
@@ -180,11 +180,14 @@ def make_line(text, f, color, glow_color):
     a = np.asarray(im, np.float32)[..., 3] / 255
     sharp = a
     blur = np.asarray(im.getchannel("A").filter(ImageFilter.GaussianBlur(9)), np.float32) / 255
-    glow = np.asarray(im.getchannel("A").filter(ImageFilter.GaussianBlur(16)), np.float32) / 255
+    glow = np.asarray(im.getchannel("A").filter(ImageFilter.GaussianBlur(20)), np.float32) / 255
     shadow = np.asarray(im.getchannel("A").filter(ImageFilter.GaussianBlur(7)), np.float32) / 255
     return dict(sharp=sharp, blur=blur, glow=glow, shadow=shadow,
                 color=np.array(color, np.float32) / 255, glowc=np.array(glow_color, np.float32) / 255,
                 w=im.width, h=im.height)
+
+
+TINTS = {"gold": ((255, 205, 90), (255, 150, 40)), "blue": (BLUE, BLUE), "pink": (PINK, PINK), "white": (WHITE, (255, 240, 250))}
 
 
 def build_card(c):
@@ -192,16 +195,23 @@ def build_card(c):
     lines = []
     if c.get("year"):
         lines.append((c["year"], font(FONT, 64), GOLD, (255, 170, 60)))
+    bigs = c.get("line_big", [kind == "big"] * len(c["lines"]))
     for i, l in enumerate(c["lines"]):
-        if kind == "big":
-            path = FONT_SYM if "♥" in l else (FONT_I if c.get("italic") else FONT)
-            f = font(path, 118)
+        if bigs[i]:
+            path = FONT_SYM if "♥" in l else FONT_I
+            f = font(path, 150 if "♥" in l else 124)
         elif kind == "end":
             f = font(FONT_I if i == 0 else FONT, 58 if i == 0 else 66)
         else:
             f = font(FONT_I if c.get("italic") else FONT, 70)
         glowc = PINK if i % 2 == 0 else BLUE
-        col = GOLD if (kind == "end" and i == 0) else WHITE
+        col = WHITE
+        if c.get("tint"):
+            tc, glowc = TINTS[c["tint"]]
+            if bigs[i] or c["tint"] == "gold":
+                col = tc if c["tint"] == "gold" else WHITE
+        if "♥" in l:
+            col, glowc = PINK, PINK
         lines.append((l, f, col, glowc))
     built = [make_line(*x) for x in lines]
     gap = -26
@@ -243,7 +253,7 @@ def draw_text(frame, t):
                 continue
             reg = frame[y0:y1, x0:x1]
             alpha = (b["sharp"] * m + b["blur"] * (1 - m)) * a
-            reg *= (1 - 0.60 * b["glow"][..., None] * a) * (1 - 0.85 * b["shadow"][..., None] * a)
+            reg *= (1 - 0.82 * b["glow"][..., None] * a) * (1 - 0.85 * b["shadow"][..., None] * a)
             reg += b["glow"][..., None] * b["glowc"] * a * (0.25 + 0.8 * flare + 0.7 * pulse)
             reg[:] = reg * (1 - alpha[..., None]) + b["color"] * alpha[..., None]
 

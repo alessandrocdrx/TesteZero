@@ -6,8 +6,11 @@
   "kind": "big",
   "italic": true,
   "fx": "burst",
-  "start": 1.5,
-  "end": 4.9
+  "start": 1.85,
+  "end": 3.05,
+  "line_starts": [
+   1.85
+  ]
  },
  {
   "year": "1999",
@@ -16,8 +19,14 @@
    "Monica Helms",
    "criou uma bandeira."
   ],
-  "start": 5.6,
-  "end": 10.46
+  "start": 3.4899999999999998,
+  "end": 8.649999999999999,
+  "line_starts": [
+   3.4899999999999998,
+   5.59,
+   6.51,
+   7.489999999999999
+  ]
  },
  {
   "lines": [
@@ -25,8 +34,13 @@
    "Rosa.",
    "E branco no meio."
   ],
-  "start": 11.16,
-  "end": 15.25
+  "start": 9.049999999999999,
+  "end": 11.69,
+  "line_starts": [
+   9.049999999999999,
+   10.07,
+   10.49
+  ]
  },
  {
   "lines": [
@@ -36,8 +50,14 @@
    "ela estará sempre certa."
   ],
   "fx": "flip",
-  "start": 15.95,
-  "end": 22.35
+  "start": 12.15,
+  "end": 16.900000000000002,
+  "line_starts": [
+   12.15,
+   13.17,
+   14.11,
+   15.53
+  ]
  },
  {
   "lines": [
@@ -45,8 +65,11 @@
   ],
   "kind": "big",
   "italic": true,
-  "start": 23.05,
-  "end": 26.45
+  "start": 17.450000000000003,
+  "end": 18.650000000000002,
+  "line_starts": [
+   17.450000000000003
+  ]
  },
  {
   "year": "1969",
@@ -56,8 +79,15 @@
    "e Sylvia Rivera",
    "estavam na linha de frente."
   ],
-  "start": 27.15,
-  "end": 33.94
+  "start": 19.19,
+  "end": 25.5,
+  "line_starts": [
+   19.19,
+   21.23,
+   22.39,
+   23.19,
+   24.25
+  ]
  },
  {
   "lines": [
@@ -66,8 +96,14 @@
    "“Pay It No Mind”:",
    "não dê ouvidos."
   ],
-  "start": 34.64,
-  "end": 41.04
+  "start": 26.05,
+  "end": 30.35,
+  "line_starts": [
+   26.05,
+   27.130000000000003,
+   27.85,
+   29.310000000000002
+  ]
  },
  {
   "year": "2004",
@@ -77,8 +113,15 @@
    "a campanha",
    "“Travesti e Respeito”."
   ],
-  "start": 41.74,
-  "end": 48.52
+  "start": 30.75,
+  "end": 37.2,
+  "line_starts": [
+   30.75,
+   32.01,
+   33.37,
+   34.97,
+   35.61
+  ]
  },
  {
   "lines": [
@@ -86,8 +129,13 @@
    "Dia Nacional da",
    "Visibilidade Trans."
   ],
-  "start": 49.22,
-  "end": 54.47
+  "start": 37.75,
+  "end": 41.970000000000006,
+  "line_starts": [
+   37.75,
+   39.63,
+   40.77
+  ]
  },
  {
   "year": "2022",
@@ -97,8 +145,15 @@
    "deputadas federais trans",
    "do Brasil."
   ],
-  "start": 55.17,
-  "end": 62.34
+  "start": 42.47,
+  "end": 49.150000000000006,
+  "line_starts": [
+   42.47,
+   43.83,
+   45.65,
+   47.17,
+   48.61
+  ]
  },
  {
   "lines": [
@@ -107,16 +162,26 @@
    "que o mundo tentou",
    "ler errado."
   ],
-  "start": 63.04,
-  "end": 69.82
+  "start": 49.550000000000004,
+  "end": 53.81,
+  "line_starts": [
+   49.550000000000004,
+   50.730000000000004,
+   52.35,
+   53.190000000000005
+  ]
  },
  {
   "lines": [
    "E cada uma",
    "escreveu a própria história."
   ],
-  "start": 70.52,
-  "end": 74.62
+  "start": 54.21,
+  "end": 56.07,
+  "line_starts": [
+   54.21,
+   55.050000000000004
+  ]
  },
  {
   "lines": [
@@ -125,8 +190,11 @@
   "kind": "big",
   "italic": true,
   "fx": "burst",
-  "start": 75.32,
-  "end": 78.72
+  "start": 56.47,
+  "end": 58.52,
+  "line_starts": [
+   56.47
+  ]
  },
  {
   "lines": [
@@ -134,8 +202,13 @@
    "o céu que é seu",
    "por direito."
   ],
-  "start": 79.42,
-  "end": 84.28
+  "start": 59.07,
+  "end": 61.470000000000006,
+  "line_starts": [
+   59.07,
+   59.93,
+   60.75
+  ]
  },
  {
   "lines": [
@@ -143,8 +216,13 @@
    "a coragem",
    "que floresce."
   ],
-  "start": 84.98,
-  "end": 88.68
+  "start": 61.870000000000005,
+  "end": 64.07,
+  "line_starts": [
+   61.870000000000005,
+   62.730000000000004,
+   63.33
+  ]
  },
  {
   "lines": [
@@ -152,8 +230,13 @@
    "a página que só você",
    "pode escrever."
   ],
-  "start": 89.38,
-  "end": 94.25
+  "start": 64.47,
+  "end": 67.74999999999999,
+  "line_starts": [
+   64.47,
+   65.41,
+   66.92999999999999
+  ]
  },
  {
   "lines": [
@@ -161,8 +244,12 @@
    "exceção."
   ],
   "kind": "big",
-  "start": 94.95,
-  "end": 98.35
+  "start": 68.14999999999999,
+  "end": 69.49,
+  "line_starts": [
+   68.14999999999999,
+   68.97
+  ]
  },
  {
   "lines": [
@@ -171,8 +258,12 @@
   ],
   "kind": "big",
   "fx": "burst",
-  "start": 99.05,
-  "end": 102.45
+  "start": 69.89,
+  "end": 71.14999999999999,
+  "line_starts": [
+   69.89,
+   70.47
+  ]
  },
  {
   "lines": [
@@ -180,8 +271,11 @@
   ],
   "kind": "big",
   "fx": "heart",
-  "start": 103.15,
-  "end": 105.75
+  "start": 71.55,
+  "end": 72.36999999999999,
+  "line_starts": [
+   71.55
+  ]
  },
  {
   "lines": [
@@ -189,8 +283,11 @@
   ],
   "kind": "big",
   "fx": "heart",
-  "start": 106.45,
-  "end": 109.05
+  "start": 72.77,
+  "end": 73.71,
+  "line_starts": [
+   72.77
+  ]
  },
  {
   "lines": [
@@ -198,8 +295,11 @@
   ],
   "kind": "big",
   "fx": "heart",
-  "start": 109.75,
-  "end": 112.35
+  "start": 74.11,
+  "end": 75.13,
+  "line_starts": [
+   74.11
+  ]
  },
  {
   "lines": [
@@ -207,8 +307,12 @@
    "que o mundo olhe…"
   ],
   "fx": "flip",
-  "start": 113.05,
-  "end": 117.52
+  "start": 75.53,
+  "end": 77.68999999999998,
+  "line_starts": [
+   75.53,
+   76.63
+  ]
  },
  {
   "lines": [
@@ -217,8 +321,24 @@
   "kind": "big",
   "italic": true,
   "fx": "burst",
-  "start": 118.22,
-  "end": 121.62
+  "start": 78.08999999999999,
+  "end": 78.99,
+  "line_starts": [
+   78.08999999999999
+  ]
+ },
+ {
+  "lines": [
+   "Com amor. ♥"
+  ],
+  "kind": "big",
+  "italic": true,
+  "fx": "burst",
+  "start": 79.39,
+  "end": 82.39,
+  "line_starts": [
+   79.39
+  ]
  },
  {
   "lines": [
@@ -231,17 +351,7 @@
    "Duda Salabert"
   ],
   "kind": "end",
-  "start": 122.32,
-  "end": 129.32
- },
- {
-  "lines": [
-   "Com amor. ♥"
-  ],
-  "kind": "big",
-  "italic": true,
-  "fx": "burst",
-  "start": 130.02,
-  "end": 133.42
+  "start": 83.09,
+  "end": 90.09
  }
 ]
