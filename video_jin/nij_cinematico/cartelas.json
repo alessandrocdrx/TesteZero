@@ -1,0 +1,374 @@
+[
+ {
+  "lines": [
+   "Nij."
+  ],
+  "line_starts": [
+   1.85
+  ],
+  "line_big": [
+   true
+  ],
+  "start": 1.85,
+  "end": 2.6900000000000004,
+  "fx": "burst"
+ },
+ {
+  "lines": [
+   "Leram teu nome",
+   "da esquerda pra direita",
+   "e acharam que sabiam",
+   "quem você era."
+  ],
+  "line_starts": [
+   3.0900000000000003,
+   3.9900000000000007,
+   5.77,
+   6.93
+  ],
+  "line_big": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "start": 3.0900000000000003,
+  "end": 7.730000000000001
+ },
+ {
+  "lines": [
+   "Mas você sempre soube",
+   "que a verdade se lê",
+   "do jeito que o coração espera."
+  ],
+  "line_starts": [
+   8.13,
+   9.47,
+   10.49
+  ],
+  "line_big": [
+   false,
+   false,
+   false
+  ],
+  "start": 8.13,
+  "end": 12.27
+ },
+ {
+  "lines": [
+   "Jin, diziam.",
+   "Ouro, metal,",
+   "brilho guardado."
+  ],
+  "line_starts": [
+   12.67,
+   14.25,
+   15.67
+  ],
+  "line_big": [
+   true,
+   false,
+   false
+  ],
+  "start": 12.67,
+  "end": 16.47,
+  "tint": "gold"
+ },
+ {
+  "lines": [
+   "Você virou o espelho,",
+   "e o ouro respondeu:"
+  ],
+  "line_starts": [
+   16.87,
+   18.150000000000002
+  ],
+  "line_big": [
+   false,
+   false
+  ],
+  "start": 16.87,
+  "end": 19.27,
+  "fx": "flip"
+ },
+ {
+  "lines": [
+   "Nij.",
+   "numa língua antiga",
+   "quer dizer: nova."
+  ],
+  "line_starts": [
+   19.67,
+   20.37,
+   21.470000000000002
+  ],
+  "line_big": [
+   true,
+   false,
+   false
+  ],
+  "start": 19.67,
+  "end": 22.73,
+  "fx": "burst"
+ },
+ {
+  "lines": [
+   "Nova não porque",
+   "nasceu de novo,",
+   "mas porque enfim nasceu",
+   "o que era seu."
+  ],
+  "line_starts": [
+   23.130000000000003,
+   23.85,
+   24.970000000000002,
+   25.990000000000002
+  ],
+  "line_big": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "start": 23.130000000000003,
+  "end": 27.05
+ },
+ {
+  "lines": [
+   "Tem o azul do céu",
+   "de quem aprendeu",
+   "a voar sozinha."
+  ],
+  "line_starts": [
+   27.450000000000003,
+   28.59,
+   29.450000000000003
+  ],
+  "line_big": [
+   false,
+   false,
+   false
+  ],
+  "start": 27.450000000000003,
+  "end": 30.13,
+  "tint": "blue"
+ },
+ {
+  "lines": [
+   "O rosa da coragem",
+   "que floresce",
+   "sem pedir licença."
+  ],
+  "line_starts": [
+   30.53,
+   31.990000000000002,
+   32.77
+  ],
+  "line_big": [
+   false,
+   false,
+   false
+  ],
+  "start": 30.53,
+  "end": 33.790000000000006,
+  "tint": "pink"
+ },
+ {
+  "lines": [
+   "E no meio, o branco:",
+   "a página em branco",
+   "onde você escreve",
+   "a própria sentença."
+  ],
+  "line_starts": [
+   34.190000000000005,
+   35.83,
+   36.85,
+   37.77
+  ],
+  "line_big": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "start": 34.190000000000005,
+  "end": 38.790000000000006,
+  "tint": "white"
+ },
+ {
+  "lines": [
+   "E aí eu te leio:",
+   "Ninja."
+  ],
+  "line_starts": [
+   39.190000000000005,
+   40.61
+  ],
+  "line_big": [
+   false,
+   true
+  ],
+  "start": 39.190000000000005,
+  "end": 40.910000000000004,
+  "burst_at": [
+   40.76
+  ]
+ },
+ {
+  "lines": [
+   "Porque ninguém viu o treino,",
+   "só a chegada."
+  ],
+  "line_starts": [
+   41.31,
+   42.81
+  ],
+  "line_big": [
+   false,
+   false
+  ],
+  "start": 41.31,
+  "end": 43.550000000000004
+ },
+ {
+  "lines": [
+   "Cada passo no escuro",
+   "foi um golpe certeiro"
+  ],
+  "line_starts": [
+   43.95,
+   45.15
+  ],
+  "line_big": [
+   false,
+   false
+  ],
+  "start": 43.95,
+  "end": 46.290000000000006
+ },
+ {
+  "lines": [
+   "contra o medo,",
+   "contra a dúvida,",
+   "contra o nada."
+  ],
+  "line_starts": [
+   46.690000000000005,
+   47.49,
+   48.59
+  ],
+  "line_big": [
+   false,
+   false,
+   false
+  ],
+  "start": 46.690000000000005,
+  "end": 49.21,
+  "fx": "heart"
+ },
+ {
+  "lines": [
+   "Você não se escondeu:",
+   "se lapidou.",
+   "Não fugiu.",
+   "Atravessou."
+  ],
+  "line_starts": [
+   49.61,
+   51.01,
+   52.21,
+   53.53
+  ],
+  "line_big": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "start": 49.61,
+  "end": 53.730000000000004
+ },
+ {
+  "lines": [
+   "E hoje, quando o mundo",
+   "tenta te ler errado,",
+   "você sorri,",
+   "porque já sabe quem é."
+  ],
+  "line_starts": [
+   54.13,
+   55.33,
+   56.83,
+   57.61
+  ],
+  "line_big": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "start": 54.13,
+  "end": 58.650000000000006
+ },
+ {
+  "lines": [
+   "Nij.",
+   "Nova.",
+   "Inteira."
+  ],
+  "line_starts": [
+   59.050000000000004,
+   60.21,
+   61.11
+  ],
+  "line_big": [
+   true,
+   true,
+   true
+  ],
+  "start": 59.050000000000004,
+  "end": 61.39,
+  "burst_at": [
+   59.2
+  ]
+ },
+ {
+  "lines": [
+   "Ouro de trás pra frente.",
+   "Mulher.",
+   "do jeito que sempre foi."
+  ],
+  "line_starts": [
+   61.79,
+   63.67,
+   64.27
+  ],
+  "line_big": [
+   false,
+   true,
+   false
+  ],
+  "start": 61.79,
+  "end": 66.45,
+  "fx": "heart",
+  "burst_at": [
+   63.82
+  ]
+ },
+ {
+  "lines": [
+   "♥"
+  ],
+  "line_starts": [
+   66.85
+  ],
+  "line_big": [
+   true
+  ],
+  "start": 66.85,
+  "end": 70.95,
+  "fx": "burst",
+  "final": true
+ }
+]
