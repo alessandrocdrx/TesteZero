@@ -1,4 +1,4 @@
-# Desafio Samuel: Documento do Projeto v1 (16/10/2026)
+# Desafio Samuel: Documento do Projeto v2 (16/10/2026)
 
 ## 1. Visão
 
@@ -13,7 +13,7 @@
 ### Sabemos
 - S1. O Samuel e outras pessoas ("estamos") têm mesas fixas no Nex, na R. Francisco Rocha, 198, Batel, Curitiba (PR).
 - S2. A visita está proposta para quinta (22/10) ou sexta (23/10), às 15h.
-- S3. Não há prazo de entrega.
+- S3. Condição da visita: o Samuel envia o desafio (dor, layout, funcionalidade ou sistema) e o Alessandro só vai quando ele estiver pronto e funcionando. A data da visita se ajusta ao tamanho do desafio.
 - S4. O Alessandro desenvolve e implanta a solução.
 
 ### Premissas
@@ -65,6 +65,7 @@ Nenhuma ainda.
 |---|---|
 | Escopo crescer por ser favor entre amigos ("só mais uma coisinha") | Combinar desde o início: MVP pequeno, pedido novo vai para a próxima onda |
 | Projeto sem uso real depois de pronto | Exigir problema real e métrica de sucesso antes de começar |
+| Desafio grande demais para chegar funcionando na visita | Entregar na visita a primeira parte funcionando e combinar o resto em ondas |
 | Custo mensal recorrente sem dono | Definir na rodada 1 quem paga e em nome de quem ficam contas e domínio |
 
 ## 10. Histórico
@@ -72,3 +73,4 @@ Nenhuma ainda.
 |---|---|---|
 | v0 | 16/10/2026 | Triagem inicial a partir da conversa de WhatsApp |
 | v1 | 16/10/2026 | Samuel não é cliente e o objetivo é impressionar. Foco em objetivo de mercado e rodada 1 reduzida a 4 perguntas. L5, L6 e L7 ficam para depois da ideia escolhida |
+| v2 | 16/10/2026 | Mensagem refeita como condição: a visita acontece com o desafio pronto e funcional |
