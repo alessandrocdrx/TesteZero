@@ -24,7 +24,16 @@ def ler_video(path, w, h):
     return np.frombuffer(raw, np.uint8).reshape(-1, h, w, 3)
 
 
-V = ler_video(a.video, W, H)
+# vídeo inteiro em resolução reduzida (1080p × 750 quadros não cabe na memória); só a inspeção lê quadros em 1080p
+V = ler_video(a.video, R.DIAG_W, R.DIAG_H)
+
+
+def quadro(i):
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-ss", f"{i / R.FPS:.4f}", "-i", a.video, "-frames:v", "1", "-f", "rawvideo",
+                          "-pix_fmt", "rgb24", "-"], capture_output=True, check=True).stdout
+    return np.frombuffer(raw, np.uint8)[:W * H * 3].reshape(H, W, 3)
+
+
 n0 = int(round(a.de * R.FPS)); N = len(V)
 T = [(n0 + i) / R.FPS for i in range(N)]
 res, piores = {}, {}
@@ -32,11 +41,11 @@ res, piores = {}, {}
 # diagnóstico do render: o render.py salva _render/diag.npz junto com o vídeo (amarrado pelo sha256);
 # só se não bater é que os quadros são renderizados de novo aqui (lento: ~1 s por quadro)
 from cache import sha256
-D, ESC = [], 1.0
+D, ESC = [], R.DIAG_W / W  # máscara e vídeo comparados na resolução reduzida
 dg_path = os.path.join(OUT, "diag.npz")
-dg = np.load(dg_path) if os.path.exists(dg_path) else None
+# dict(): cada dg[chave] num NpzFile descomprime o arquivo de novo (750 cópias da máscara estouram a memória)
+dg = dict(np.load(dg_path)) if os.path.exists(dg_path) else None
 if dg is not None and str(dg["video_sha256"]) == sha256(a.video) and int(dg["n0"]) == n0 and len(dg["area"]) >= N:
-    ESC = R.DIAG_W / W  # máscara guardada reduzida
     pe = json.loads(str(dg["por_efeito"]))
     for i in range(N):
         D.append({"area": float(dg["area"][i]), "cobertura": float(dg["cobertura"][i]), "paralaxe": float(dg["paralaxe"][i]),
@@ -47,17 +56,17 @@ else:
     for t in T:
         _, d = R.render_quadro(t, a.final, cache_fr, diag=True)
         # só o necessário (25 s em 1080p com camadas float32 inteiras estoura a memória)
-        d["area"] = float(d["mask"].mean()); d["mask"] = d["mask"] > 0.6; d["cobertura"] = float(d["cobertura"].mean())
+        d["area"] = float(d["mask"].mean()); d["mask"] = cv2.resize(d["mask"], (R.DIAG_W, R.DIAG_H)) > 0.6; d["cobertura"] = float(d["cobertura"].mean())
         D.append(d)
     print("diagnóstico: renderizado de novo (diag.npz ausente ou de outro vídeo)")
 
 # ---------- 2. Integridade do personagem (consistência na cena e entre cenas + deformação) ----------
 cena_de = [R.cena_em(t) for t in T]
-com_pers = [i for i in range(N) if not (cena_de[i][5].get("sem_rosto") or cena_de[i][5].get("fim"))]
+com_pers = [i for i in range(N) if not any(cena_de[i][5].get(o) for o in ("sem_rosto", "fim", "camada_unica"))]  # só camada recortada
 cores = np.zeros((N, 6))
 for i in com_pers:
     m = D[i]["mask"]
-    Vi = V[i] if ESC == 1.0 else cv2.resize(V[i], (m.shape[1], m.shape[0]), interpolation=cv2.INTER_AREA)
+    Vi = V[i]
     x0, y0, x1, y1 = [int(v * ESC) for v in D[i]["rosto"]]
     tronco = m.copy(); tronco[:max(0, y1)] = False  # camisa: abaixo da cabeça
     pele = m.copy(); pele[:max(0, y0)] = False; pele[max(0, y1):] = False
@@ -185,7 +194,7 @@ res["1_vazamento"] = {"passou": True, "nota": "não se aplica ao tipo C (100% IA
 tiles = []
 for nome, i in piores.items():
     x0, y0, x1, y1 = [int(q) for q in D[i]["rosto"]]
-    fr = Image.fromarray(V[i])
+    fr = Image.fromarray(quadro(i))
     cx, cy = (x0 + x1) // 2, (y0 + y1) // 2 + int(0.35 * (y1 - y0))
     s = int(max(x1 - x0, 120 * k) * 1.4)
     crop = fr.crop((cx - s, cy - s, cx + s, cy + s)).resize((360, 360), Image.LANCZOS)

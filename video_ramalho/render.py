@@ -51,7 +51,7 @@ CENAS = [  # trechos do clipe escolhidos pela folha de contato
     ("cena01", 0.0, 4.1, (1.0, 0.6), 1.04, {"sem_rosto": True}),               # chama amarela falha e apaga
     ("cena02", 4.1, 5.6, (1.8, 2.2 - 1.8 * 4.1), 1.0, {}),                     # entra com a caixa e sorri
     ("cena03", 5.6, 9.25, (3.4 / 3.65, 1.6 - 3.4 / 3.65 * 5.6), 1.02, {}),   # encaixa a tampa e regula a chama, sorri
-    ("cena04", 9.25, 11.8, (1.3, 1.6 - 1.3 * 9.25), 1.0, {}),                  # acende o industrial e mostra
+    ("cena04", 9.25, 11.8, (1.3, 1.6 - 1.3 * 9.25), 1.0, {"camada_unica": True}),                  # acende o industrial e mostra
     ("cena05", 11.8, 15.15, (0.672, 2.75 - 0.672 * 11.8), 1.06, {}),          # chama azul (só depois que a mão sai do fogo)
     ("cena06", 15.15, 17.6, (1.0, 0.6 - 15.15), 1.04, {}),                     # joinha
     # tela final: o fim do clipe 6 em câmera lenta, desfocado e escurecido, com o selo, o telefone e o número
@@ -310,7 +310,9 @@ def render_quadro(t, final, cache_fr, diag=False):
     if j != i and fr > 0.01:
         img = img * (1 - fr) + quadro_clipe(nome, j, W, H, cache_fr) * fr
         m = m * (1 - fr) + m1 * fr; placa = placa * (1 - fr) + placa1 * fr
-    if op.get("sem_rosto"):  # sem personagem: o quadro inteiro é fundo (o recorte pegava a chama e duplicava)
+    if op.get("sem_rosto") or op.get("camada_unica"):
+        # quadro inteiro numa camada só: o recorte pegava a chama (cena 1) / o fogão sob a mão (cena 4) e o
+        # preenchimento atrás virava borrões cinza; a profundidade continua dando o 3D, pivô no personagem
         placa, m = img.copy(), m * 0
     info = {"rosto": an["rosto"][i], "corpo": an["corpo"][i]}
     if op.get("sem_rosto") or op.get("fim"):
