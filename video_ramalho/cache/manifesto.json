@@ -342,9 +342,9 @@
       "criado": "2026-10-17 18:26:16"
     },
     "analise_cena03": {
-      "chave": "7dc3e0f746512d88",
+      "chave": "bcd69a154720d3e0",
       "params": {
-        "clip_sha256": "9926e347cdab417e1ace2a3ecfa888116a11d54abce7ed83aedcb0fd0ea780ae",
+        "clip_sha256": "966135b989e0da25e088cd60a088424f7c05bf2dd5c746e13f870f682169bc30",
         "w": 540,
         "h": 960,
         "seg": "isnet-general-use",
@@ -352,8 +352,8 @@
       },
       "seed": null,
       "arquivo": "analise_cena03.npz",
-      "sha256": "9a92a2f648a101cf44f34e3f030d2d7eaf5af6bd7eb871e4662158113f41a64d",
-      "criado": "2026-10-17 18:30:07"
+      "sha256": "b45035539de2fa34ce7a525450052219d1b7b73d4f7ed8b7e37de52f807bae47",
+      "criado": "2026-10-17 19:20:22"
     },
     "analise_cena04": {
       "chave": "b6d1854f01e6e614",
@@ -442,6 +442,36 @@
       "arquivo": "profund_cena06.npz",
       "sha256": "ebe78b5b8a7404ba26adb31eac7a421ceaecf148630898a7f021858a6e47f538",
       "criado": "2026-10-17 19:10:31"
+    },
+    "profund_cena01": {
+      "chave": "d830d47dd00be667",
+      "params": {
+        "clip_sha256": "7df1d502ec5bbd5340b2b2164cde48fa48864cc7fb0b57c29c519d92ebc5d936",
+        "modelo": "depth-anything-v2-small",
+        "w": 294,
+        "h": 518,
+        "passo": 3,
+        "v": 1
+      },
+      "seed": null,
+      "arquivo": "profund_cena01.npz",
+      "sha256": "f39634fab0fcf82702c7297c03f4cefd805385a4b0911dc71a4a831d140805c7",
+      "criado": "2026-10-17 19:20:37"
+    },
+    "profund_cena03": {
+      "chave": "2ac2369cda96913b",
+      "params": {
+        "clip_sha256": "966135b989e0da25e088cd60a088424f7c05bf2dd5c746e13f870f682169bc30",
+        "modelo": "depth-anything-v2-small",
+        "w": 294,
+        "h": 518,
+        "passo": 3,
+        "v": 1
+      },
+      "seed": null,
+      "arquivo": "profund_cena03.npz",
+      "sha256": "7445bd842ef9d36a0db9657da95b911a25e02e2761d5bdb3957a504fb22f3a22",
+      "criado": "2026-10-17 19:20:56"
     }
   }
 }
