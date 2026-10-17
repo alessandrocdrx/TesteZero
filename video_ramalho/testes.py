@@ -29,13 +29,27 @@ n0 = int(round(a.de * R.FPS)); N = len(V)
 T = [(n0 + i) / R.FPS for i in range(N)]
 res, piores = {}, {}
 
-# diagnóstico do render (mesmos quadros, só dependem de t)
-D, cache_fr = [], {}
-for t in T:
-    _, d = R.render_quadro(t, a.final, cache_fr, diag=True)
-    # só o necessário (25 s em 1080p com camadas float32 inteiras estoura a memória)
-    d["area"] = float(d["mask"].mean()); d["mask"] = d["mask"] > 0.6; d["cobertura"] = float(d["cobertura"].mean())
-    D.append(d)
+# diagnóstico do render: o render.py salva _render/diag.npz junto com o vídeo (amarrado pelo sha256);
+# só se não bater é que os quadros são renderizados de novo aqui (lento: ~1 s por quadro)
+from cache import sha256
+D, ESC = [], 1.0
+dg_path = os.path.join(OUT, "diag.npz")
+dg = np.load(dg_path) if os.path.exists(dg_path) else None
+if dg is not None and str(dg["video_sha256"]) == sha256(a.video) and int(dg["n0"]) == n0 and len(dg["area"]) >= N:
+    ESC = R.DIAG_W / W  # máscara guardada reduzida
+    pe = json.loads(str(dg["por_efeito"]))
+    for i in range(N):
+        D.append({"area": float(dg["area"][i]), "cobertura": float(dg["cobertura"][i]), "paralaxe": float(dg["paralaxe"][i]),
+                  "desloc_3d": float(dg["desloc_3d"][i]), "rosto": dg["rosto"][i], "mask": dg["mask"][i], "por_efeito": pe[i]})
+    print("diagnóstico: do render (diag.npz)")
+else:
+    cache_fr = {}
+    for t in T:
+        _, d = R.render_quadro(t, a.final, cache_fr, diag=True)
+        # só o necessário (25 s em 1080p com camadas float32 inteiras estoura a memória)
+        d["area"] = float(d["mask"].mean()); d["mask"] = d["mask"] > 0.6; d["cobertura"] = float(d["cobertura"].mean())
+        D.append(d)
+    print("diagnóstico: renderizado de novo (diag.npz ausente ou de outro vídeo)")
 
 # ---------- 2. Integridade do personagem (consistência na cena e entre cenas + deformação) ----------
 cena_de = [R.cena_em(t) for t in T]
@@ -43,11 +57,12 @@ com_pers = [i for i in range(N) if not (cena_de[i][5].get("sem_rosto") or cena_d
 cores = np.zeros((N, 6))
 for i in com_pers:
     m = D[i]["mask"]
-    x0, y0, x1, y1 = [int(v) for v in D[i]["rosto"]]
+    Vi = V[i] if ESC == 1.0 else cv2.resize(V[i], (m.shape[1], m.shape[0]), interpolation=cv2.INTER_AREA)
+    x0, y0, x1, y1 = [int(v * ESC) for v in D[i]["rosto"]]
     tronco = m.copy(); tronco[:max(0, y1)] = False  # camisa: abaixo da cabeça
     pele = m.copy(); pele[:max(0, y0)] = False; pele[max(0, y1):] = False
-    c1 = V[i][tronco].mean(0) if tronco.any() else np.zeros(3)
-    c2 = V[i][pele].mean(0) if pele.any() else np.zeros(3)
+    c1 = Vi[tronco].mean(0) if tronco.any() else np.zeros(3)
+    c2 = Vi[pele].mean(0) if pele.any() else np.zeros(3)
     cores[i] = np.r_[c1, c2]
 d_cor = np.zeros(N); medianas = {}
 for nome in sorted({cena_de[i][0] for i in com_pers}):

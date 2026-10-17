@@ -448,6 +448,9 @@ def gerar_ass(path, W, H):
 
 
 # ---------- pedaços paralelos ----------
+DIAG_W, DIAG_H = 270, 480  # máscara do diagnóstico guardada reduzida (memória e disco)
+
+
 def pedaco(args):
     k, ta, tb, final, ass, out = args
     W, H = tamanho(final)
@@ -457,11 +460,18 @@ def pedaco(args):
     p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     cache_fr = {}
     n0, n1 = int(round(ta * FPS)), int(round(tb * FPS))
+    diag = {"area": [], "cobertura": [], "paralaxe": [], "desloc_3d": [], "rosto": [], "mask": [], "por_efeito": []}
     for n in range(n0, n1):
-        fr = render_quadro(n / FPS, final, cache_fr)
+        # o diagnóstico sai junto com o quadro: os testes leem isto em vez de renderizar tudo de novo
+        fr, d = render_quadro(n / FPS, final, cache_fr, diag=True)
         p.stdin.write((fr * 255 + 0.5).astype(np.uint8).tobytes())
+        diag["area"].append(float(d["mask"].mean())); diag["cobertura"].append(float(d["cobertura"].mean()))
+        diag["paralaxe"].append(float(d["paralaxe"])); diag["desloc_3d"].append(float(d["desloc_3d"]))
+        diag["rosto"].append(np.array(d["rosto"], np.float32))
+        diag["mask"].append(cv2.resize(d["mask"], (DIAG_W, DIAG_H), interpolation=cv2.INTER_AREA) > 0.6)
+        diag["por_efeito"].append(d["por_efeito"])
     p.stdin.close(); p.wait()
-    return out
+    return out, diag
 
 
 def main():
@@ -476,7 +486,8 @@ def main():
     cortes = [n0 + (n1 - n0) * j // 4 for j in range(5)]
     jobs = [(j, cortes[j] / FPS, cortes[j + 1] / FPS, a.final, ass, os.path.join(tmp, f"p{j}.mp4")) for j in range(4)]
     with Pool(4) as pool:
-        partes = pool.map(pedaco, jobs)
+        res = pool.map(pedaco, jobs)
+    partes = [r[0] for r in res]
     lista = os.path.join(tmp, "lista.txt")
     open(lista, "w").write("".join(f"file '{p}'\n" for p in partes))
     audio = os.path.join(DIR, "narracao", "take1.mp3")
@@ -486,6 +497,14 @@ def main():
                     f"afade=t=in:d=0.05,afade=t=out:st={dur - 0.08:.3f}:d=0.08[a]",
                     "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-t", f"{dur:.3f}",
                     "-movflags", "+faststart", a.saida], check=True)
+    # diagnóstico por quadro para os testes, amarrado a este vídeo (sha256) e a este trecho
+    from cache import sha256
+    dg = {k: [x for r in res for x in r[1][k]] for k in res[0][1]}
+    np.savez_compressed(os.path.join(tmp, "diag.npz"), video_sha256=sha256(a.saida), n0=n0, n1=n1, final=a.final,
+                        area=np.array(dg["area"], np.float32), cobertura=np.array(dg["cobertura"], np.float32),
+                        paralaxe=np.array(dg["paralaxe"], np.float32), desloc_3d=np.array(dg["desloc_3d"], np.float32),
+                        rosto=np.array(dg["rosto"], np.float32), mask=np.array(dg["mask"], bool),
+                        por_efeito=json.dumps(dg["por_efeito"]))
     print("ok", a.saida)
 
 
