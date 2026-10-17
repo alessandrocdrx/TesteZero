@@ -6,6 +6,24 @@
 - Uma única virada no clímax: a legenda some, as bordas escurecem e a câmera se aproxima no máximo 7%.
 - Créditos no final.
 
+## Versão com efeitos ligados à letra (`efeitos.py`)
+
+`analisar.py` lê o vídeo e o áudio e gera, quadro a quadro, três dados: onde está o rosto dela, quando ela
+sorri e a energia da voz. `efeitos.py` usa isso para:
+
+| Letra / momento | Efeito | Reage a |
+|---|---|---|
+| "Voa nas asas do vento" | Poeira luminosa levada pelo vento, com rajada em "ветра" | volume da voz |
+| "onde te cantávamos livres" | Pássaros cruzam o céu acima dela e sobem em "свободно" | tempo da palavra |
+| "o sol brilha… banhando de luz" | Raios de sol suaves do alto, que florescem em "солнце" | volume da voz |
+| "as rosas se abrem" | Pétalas caem pelas laterais, com uma chuva em "розы" | sorriso dela |
+| "rouxinóis cantam" | Brilhos verde-dourados piscam nas bordas | volume da voz |
+| Só a voz (clímax) | Partículas de luz sobem e respiram com o canto | volume da voz |
+| Quando ela sorri | Os cantos da tela esquentam | sorriso dela |
+| Palavra-chave da legenda | Fica dourada quando ela canta a palavra em russo | tempo da palavra |
+
+Uma máscara que acompanha o rosto dela quadro a quadro impede que qualquer efeito toque nele.
+
 As versões `mv.py` (MV pop) e `viral.py` (corte TikTok) ficaram como experimentos anteriores.
 
 ## Experimentos anteriores: reel + story

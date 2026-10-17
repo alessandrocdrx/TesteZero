@@ -25,3 +25,9 @@ echo "Pronto: saida/tiktok_viral.mp4"
 python3 calmo.py entrada/v.mp4 saida/calmo_sem_audio.mp4
 ffmpeg -loglevel error -y -i saida/calmo_sem_audio.mp4 -i entrada/v.mp4 -map 0:v -map 1:a -c copy -movflags +faststart saida/voa_nas_asas_do_vento.mp4
 echo "Pronto: saida/voa_nas_asas_do_vento.mp4"
+
+# Versão com efeitos ligados à letra, à voz e às expressões dela
+python3 analisar.py entrada/v.mp4 entrada/a.wav entrada/analise.npz
+python3 efeitos.py entrada/v.mp4 entrada/analise.npz saida/efeitos_sem_audio.mp4
+ffmpeg -loglevel error -y -i saida/efeitos_sem_audio.mp4 -i entrada/v.mp4 -map 0:v -map 1:a -c copy -movflags +faststart saida/voa_nas_asas_efeitos.mp4
+echo "Pronto: saida/voa_nas_asas_efeitos.mp4"
