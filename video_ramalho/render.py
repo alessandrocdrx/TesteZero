@@ -187,9 +187,9 @@ def efeitos(t, info):
     if k > 0:
         add(e3.selo(t), e3.rot(0.1, 0.45 * math.sin(1.3 * t), 0), AW / 2, 0.255 * AH, 0.95, 220 * k, True, "selo final")
     # 14. "WhatsApp": telefone genérico gira e fixa; o número fica até o fim
-    t14 = palavra("WhatsApp."); k = env(t, t14 - 0.05, FIM - t14 + 1)
-    if k > 0:
-        ry = 4 * math.pi * (1 - math.exp(-2.5 * (t - t14))) + 0.25 * math.sin(1.5 * t)
+    t14 = palavra("WhatsApp."); k = env(t, t14 - 0.05, FIM - t14 + 1, ent=0.4)
+    if k > 0:  # uma volta só e suave: girar rápido sobre o fundo escuro pulsava o brilho (teste 7)
+        ry = 2 * math.pi * (1 - math.exp(-1.8 * max(0.0, t - t14))) + 0.25 * math.sin(1.5 * t)
         add(e3.telefone(), e3.rot(0.1, ry, 0.12), AW / 2, 0.49 * AH, 0.9, 190 * k, True, "whatsapp")
     return out
 
