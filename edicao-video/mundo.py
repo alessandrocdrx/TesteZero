@@ -340,14 +340,22 @@ def face_mask(face, M, i):
 
 
 def main(src_path, npz, bg_dir, model, out_path):
+    preview = [float(x) for x in os.environ.get("PREVIEW", "").split(",") if x]
+    want = {int(round(x * FPS)) for x in preview}
+    clip = [float(x) for x in os.environ.get("CLIP", "").split(",") if x]
+    first, last = (int(clip[0] * FPS), int(clip[1] * FPS)) if clip else (0, int(C.DUR * FPS))
+    # keep only the frames this run renders (a full take is ~7 GB decoded), so chunks can run side by side
+    keep = (lambda j: any(abs(j - w) <= 6 for w in want)) if preview else (lambda j: first - 6 <= j < last)
     cap = cv2.VideoCapture(src_path)
-    frames = []
+    frames, n = {}, 0
     while True:
         ok, f = cap.read()
         if not ok:
             break
-        frames.append(f)
-    n = len(frames)
+        if keep(n):
+            frames[n] = f
+        tail, n = f, n + 1
+    frames[n - 1] = tail
     paintings = {s[0]: Painting(os.path.join(bg_dir, s[0] + ".png")) for s in SCENES if s[0] != "room"}
     noises = [noise_field(10 + k) for k in range(len(SCENES))]
     halo_noise = cv2.resize(noise_field(99, scale=11), (720, 1280), interpolation=cv2.INTER_AREA)
@@ -389,10 +397,6 @@ def main(src_path, npz, bg_dir, model, out_path):
         ("edição  ·  @alessandrocdrx", C.font(C.ITALIC, 44, b"Medium Italic"), (255, 255, 255, 220), 0, 0),
     ], shadow=False)
 
-    preview = [float(x) for x in os.environ.get("PREVIEW", "").split(",") if x]
-    want = {int(round(x * FPS)) for x in preview}
-    clip = [float(x) for x in os.environ.get("CLIP", "").split(",") if x]
-    first, last = (int(clip[0] * FPS), int(clip[1] * FPS)) if clip else (0, int(C.DUR * FPS))
     enc = None if preview else subprocess.Popen([
         "ffmpeg", "-loglevel", "error", "-y", "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{W}x{H}",
         "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "slow", "-crf", "17", "-tune", "film",
@@ -400,12 +404,14 @@ def main(src_path, npz, bg_dir, model, out_path):
 
     for i in range(int(C.DUR * FPS)):
         t = i / FPS
-        src = frames[min(i, n - 1)]
+        src = frames.get(min(i, n - 1))
         if (preview and i not in want) or not (first <= i < last):
-            if not cache and (any(abs(i - w) <= 6 for w in want) or first - 6 <= i < first):
+            if not cache and src is not None and (any(abs(i - w) <= 6 for w in want) or first - 6 <= i < first):
                 matte(src, int(t * 1000), min(i, n - 1))   # warm the live matte's temporal state
             if E.EMBERS[0] <= t < E.EMBERS[1]:
                 embers.draw(np.zeros((E.SH, E.SW, 3), np.float32), t, 0, face.e(t))
+            if i < last:
+                F.Foreground.advance(t, face.e(t))
             continue
         e, sm = face.e(t), face.s(t)
         fx, fy = float(fxs[min(i, n - 1)]), float(fys[min(i, n - 1)])

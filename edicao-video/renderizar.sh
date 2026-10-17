@@ -39,6 +39,6 @@ echo "Pronto: saida/voa_nas_asas_efeitos.mp4"
 [ -f entrada/quarto.npz ] || python3 quarto.py entrada/v.mp4 entrada/recorte entrada/quarto.npz
 STEP=3 python3 qa_vazamento.py entrada/v.mp4 entrada/recorte entrada/quarto.npz saida/qc_vaz
 STEP=3 python3 qa_ela.py entrada/v.mp4 entrada/recorte entrada/quarto.npz entrada/analise.npz
-MATTE_CACHE=entrada/recorte python3 mundo.py entrada/v.mp4 entrada/analise.npz cenarios modelos/selfie_multiclass.tflite saida/mundo_sem_audio.mp4
+MATTE_CACHE=entrada/recorte ./mundo_paralelo.sh entrada/v.mp4 entrada/analise.npz cenarios modelos/selfie_multiclass.tflite saida/mundo_sem_audio.mp4
 ffmpeg -loglevel error -y -i saida/mundo_sem_audio.mp4 -i entrada/v.mp4 -map 0:v -map 1:a -c copy -movflags +faststart saida/voa_nas_asas_mundo.mp4
 echo "Pronto: saida/voa_nas_asas_mundo.mp4"

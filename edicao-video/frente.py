@@ -261,6 +261,11 @@ class Mist:
 
 
 class Foreground:
+    @staticmethod
+    def advance(t, e):
+        for sw in SWARMS:
+            sw.advance(t, e)
+
     def __init__(self):
         self.leaves, self.flight, self.bokeh, self.forest, self.mist = Leaves(), Flight(), Bokeh(), Forest(), Mist()
 
@@ -366,14 +371,21 @@ class Depth3D:
     def amount(self, t):
         return max(env(a, b, t, 1.0, 1.2) for a, b in self.windows)
 
-    def draw(self, B, t, energy):
+    def advance(self, t, energy):
+        """move the swarm along without drawing (frames skipped before a CLIP), so every chunk starts in step"""
         a = self.amount(t)
         dt = 0.0 if self.last is None else max(0.0, min(t - self.last, 0.2))
         self.last = t
         if a <= 0:
-            return
+            return a, 1.0
         boost = 1 + sum(2.5 * math.exp(-((t - b) / 0.7) ** 2) for b in self.bursts)
         self.travel += dt * boost * (0.8 + 0.6 * energy)
+        return a, boost
+
+    def draw(self, B, t, energy):
+        a, boost = self.advance(t, energy)
+        if a <= 0:
+            return
         m = 160
         for p in self.p:
             z = p["z"]
