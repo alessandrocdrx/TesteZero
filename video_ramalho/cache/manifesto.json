@@ -7,5 +7,66 @@
     "cena_5s_kling-2.5-turbo_9x16_sem_referencia": 2121,
     "narracao_30s": 300
   },
-  "itens": {}
+  "itens": {
+    "referencia_opcao1": {
+      "chave": "4c5855b02c2a31b2",
+      "params": {
+        "modelo": "gemini-3-pro-image",
+        "personagem": "a friendly Brazilian gas-stove repair technician in his late 30s, stocky build, short dark hair, light stubble, warm smile, wearing a plain heather-grey polo shirt with a small yellow-orange flame logo embroidered on the left chest and the text \"Ramalho Fogões\" under it, dark work trousers, black tool belt",
+        "cenario": "a bright modern Brazilian home kitchen with white marble-look tiles, black glass 5-burner gas cooktop, granite countertop, soft daylight",
+        "variacao": 1
+      },
+      "seed": null,
+      "arquivo": "referencia/opcao1.png",
+      "sha256": "1f2a06041444ae8b55346d5cc5328902da83f0da573662082be7e1b4c6e358e9",
+      "criado": "2026-10-17 17:17:19",
+      "generation_id": "amur1UTTbIPgGMfrwRuI",
+      "creditos": 1218
+    },
+    "referencia_opcao2": {
+      "chave": "61bf5cca0f95dc25",
+      "params": {
+        "modelo": "gemini-3-pro-image",
+        "personagem": "a friendly Brazilian gas-stove repair technician in his late 30s, stocky build, short dark hair, light stubble, warm smile, wearing a plain heather-grey polo shirt with a small yellow-orange flame logo embroidered on the left chest and the text \"Ramalho Fogões\" under it, dark work trousers, black tool belt",
+        "cenario": "a bright modern Brazilian home kitchen with white marble-look tiles, black glass 5-burner gas cooktop, granite countertop, soft daylight",
+        "variacao": 2
+      },
+      "seed": null,
+      "arquivo": "referencia/opcao2.png",
+      "sha256": "c71911f1b67c501c8ebc5297c0928c8875455b2a87c67bfde85a7c57a2ff8bb8",
+      "criado": "2026-10-17 17:17:19",
+      "generation_id": "BVh4TC5HnXtK27Xo41Yx",
+      "creditos": 1218
+    },
+    "referencia_opcao3": {
+      "chave": "a9c04eb3a4c3ca56",
+      "params": {
+        "modelo": "gemini-3-pro-image",
+        "personagem": "a friendly Brazilian gas-stove repair technician in his late 30s, stocky build, short dark hair, light stubble, warm smile, wearing a plain heather-grey polo shirt with a small yellow-orange flame logo embroidered on the left chest and the text \"Ramalho Fogões\" under it, dark work trousers, black tool belt",
+        "cenario": "a bright modern Brazilian home kitchen with white marble-look tiles, black glass 5-burner gas cooktop, granite countertop, soft daylight",
+        "variacao": 3
+      },
+      "seed": null,
+      "arquivo": "referencia/opcao3.png",
+      "sha256": "0b9d2651a60756075f007d297ac31e85b089e84729e114bb7f6d6502844e9f4a",
+      "criado": "2026-10-17 17:17:19",
+      "generation_id": "7Td3Ka1c4NMOe7N9WmG0",
+      "creditos": 1218
+    },
+    "referencia_opcao4": {
+      "chave": "59362b075701c136",
+      "params": {
+        "modelo": "gemini-3-pro-image",
+        "personagem": "a friendly Brazilian gas-stove repair technician in his late 30s, stocky build, short dark hair, light stubble, warm smile, wearing a plain heather-grey polo shirt with a small yellow-orange flame logo embroidered on the left chest and the text \"Ramalho Fogões\" under it, dark work trousers, black tool belt",
+        "cenario": "a bright modern Brazilian home kitchen with white marble-look tiles, black glass 5-burner gas cooktop, granite countertop, soft daylight",
+        "variacao": 4
+      },
+      "seed": null,
+      "arquivo": "referencia/opcao4.png",
+      "sha256": "520ff9e16836541321a35c0160b4712fe96c730cfc9676547cb094e3167a750b",
+      "criado": "2026-10-17 17:17:19",
+      "generation_id": "SM7aI0ktvKCF7LoxF6Ka",
+      "creditos": 1218
+    }
+  }
 }
