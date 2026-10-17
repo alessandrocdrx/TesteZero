@@ -53,16 +53,25 @@ def transl(m, d):
 # ---------- objetos do vídeo ----------
 def chama(t, cor=(90, 170, 255), altura=1.0, seed=0):
     """Chama: sólido de revolução em gota com ondulação animada (emissiva)."""
-    ys = np.linspace(0, 1, 9)
+    ys = np.linspace(0, 1, 22)
     perfil = []
-    for y in ys:
-        r = 0.32 * math.sin(math.pi * (1 - y) ** 0.8) * (1 - 0.5 * y)
-        r *= 1 + 0.18 * math.sin(7 * t + 9 * y + seed)
+    for y in ys:  # gota: base redonda embaixo (y=0), ponta fina em cima (y=1)
+        r = 0.78 * math.sqrt(y) * (1 - y) ** 1.5
+        r *= 1 + 0.15 * math.sin(7 * t + 9 * y + seed)
         perfil.append((max(r, 0.005), -altura * y))
-    V, F = lathe(perfil, 14)
+    V, F = lathe(perfil, 20)
     V[:, 0] += 0.06 * np.sin(5 * t + 4 * -V[:, 1] + seed) * (-V[:, 1])  # tremula na ponta
     topo = np.array(cor, float); base = np.array([255, 255, 255], float)
     return (V, F), tuple(0.8 * topo + 0.2 * base), True
+
+
+def chama_viva(t, cor, altura=1.0, seed=0):
+    """Chama com núcleo claro na base (lê como fogo, não como losango)."""
+    (V, F), c, _ = chama(t, cor, altura, seed)
+    (Vn, Fn), _, _ = chama(t + 0.3, cor, 0.55 * altura, seed + 2)
+    Vn = Vn * [0.62, 1, 0.62] + [0, -0.14 * altura, -0.32]  # núcleo dentro da base, um pouco à frente
+    nucleo = tuple(0.35 * np.array(cor, float) + 0.65 * np.array([255, 250, 225], float))
+    return [((V, F), c, True), ((Vn, Fn), nucleo, True)]
 
 
 def anel_de_chamas(t, n=10, cor=(80, 160, 255)):
@@ -156,9 +165,8 @@ def selo(t):
     disco = lathe([(0.001, -0.14), (1.0, -0.14), (1.08, -0.07), (1.08, 0.07), (1.0, 0.14), (0.001, 0.14)], 40)
     disco = (disco[0][:, [0, 2, 1]], disco[1])  # de frente para a câmera
     aro = torus(1.0, 0.08, 40, 8); aro = (aro[0][:, [0, 2, 1]] + [0, 0, -0.16], aro[1])
-    (Vc, Fc), cor, _ = chama(t, (255, 150, 30), 1.25, seed=3)
-    Vc = Vc * [1.6, 1, 1.6] + [0, 0.62, -0.32]
-    return juntar((disco, (40, 44, 52), False), (aro, (230, 180, 60), False), ((Vc, Fc), cor, True))
+    fogo = [((Vc * [1.6, 1, 1.6] + [0, 0.62, -0.32], Fc), cor, True) for (Vc, Fc), cor, _ in chama_viva(t, (255, 150, 30), 1.25, seed=3)]
+    return juntar((disco, (40, 44, 52), False), (aro, (230, 180, 60), False), *fogo)
 
 
 # ---------- render ----------

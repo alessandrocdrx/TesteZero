@@ -107,7 +107,7 @@ def efeitos(t, info):
     if k > 0:
         falha = 1.0 if math.sin(9.0 * t) > -0.55 else 0.45
         x = -60 + 250 * ease((t - t1) / 0.45)
-        add(e3.juntar(e3.chama(t, (255, 190, 30), 1.0, seed=1)), e3.rot(0.1, 0.8 * t, 0.15 * math.sin(6 * t)),
+        add(e3.juntar(*e3.chama_viva(t, (255, 190, 30), 1.0, seed=1)), e3.rot(0.1, 0.8 * t, 0.15 * math.sin(6 * t)),
             x, 0.40 * AH, 0.8, 250 * k * falha * (0.9 + 0.1 * math.sin(23 * t)), True, "amarela")
     # 2. "falhando": faíscas (tetraedros) estouram do queimador e caem, em várias profundidades
     t2 = palavra("Falhando")
@@ -291,6 +291,8 @@ def render_quadro(t, final, cache_fr, diag=False):
     if j != i and fr > 0.01:
         img = img * (1 - fr) + quadro_clipe(nome, j, W, H, cache_fr) * fr
         m = m * (1 - fr) + m1 * fr; placa = placa * (1 - fr) + placa1 * fr
+    if op.get("sem_rosto"):  # sem personagem: o quadro inteiro é fundo (o recorte pegava a chama e duplicava)
+        placa, m = img.copy(), m * 0
     info = {"rosto": an["rosto"][i], "corpo": an["corpo"][i]}
     if op.get("sem_rosto") or op.get("fim"):
         info["rosto"] = np.zeros(4, np.float32)
