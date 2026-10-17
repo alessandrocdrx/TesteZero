@@ -38,9 +38,10 @@ def main():
         png = os.path.join(OUT, "_previa_q.png")
         Image.fromarray(fr).save(png)
         # legendas no mesmo instante: o filtro ass usa o timestamp do quadro
+        com_leg = os.path.join(OUT, "_previa_l.png")
         subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", png, "-vf", f"setpts=PTS+{t:.3f}/TB,ass={ass}",
-                        "-frames:v", "1", png], check=True)
-        im = Image.open(png).convert("RGB").resize((270, 480))
+                        "-frames:v", "1", "-update", "1", com_leg], check=True)
+        im = Image.open(com_leg).convert("RGB").resize((270, 480))
         tile = Image.new("RGB", (270, 512), (15, 15, 15)); tile.paste(im, (0, 32))
         ImageDraw.Draw(tile).text((4, 2), f"{t:.2f}s {rot}"[:22], font=FONT, fill=(255, 220, 60))
         tiles.append(tile)

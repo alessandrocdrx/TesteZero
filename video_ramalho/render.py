@@ -183,7 +183,7 @@ def efeitos(t, info):
         y = -80 + (yt + 80) * (u / 0.35) ** 2 if u < 0.35 else yt - 45 * abs(math.sin(9 * (u - 0.35))) * math.exp(-4 * (u - 0.35))
         add(e3.pino(), e3.rot(0.1, 2.0 * u, 0), max(95, bx0 - 5), y, 0.9, 190 * k, False, "curitiba")
     # tela final: selo da Ramalho no alto
-    k = env(t, CORTES[6], FIM - CORTES[6] + 1, ent=0.4)
+    k = env(t, CORTES[6] + 0.35, FIM - CORTES[6] + 1, ent=0.4)  # entra depois do desfoque (antes cobria o rosto)
     if k > 0:
         add(e3.selo(t), e3.rot(0.1, 0.45 * math.sin(1.3 * t), 0), AW / 2, 0.255 * AH, 0.95, 220 * k, True, "selo final")
     # 14. "WhatsApp": telefone genérico gira e fixa; o número fica até o fim
@@ -223,7 +223,12 @@ def quadro_clipe(cena, i, W, H, cache_fr):
     return cache_fr[key]
 
 
-def warp(img, s, dx, dy, W, H, borda=cv2.BORDER_REFLECT):
+def cobre(s, dx, dy, W, H):
+    """Menor escala ≥ s que, com o deslocamento (dx, dy), ainda cobre a tela inteira (sem borda espelhada)."""
+    return max(s, 1 + 2 * abs(dx) / W + 0.004, 1 + 2 * abs(dy) / H + 0.004)
+
+
+def warp(img, s, dx, dy, W, H, borda=cv2.BORDER_REPLICATE):
     M = np.float32([[s, 0, (1 - s) * W / 2 + dx], [0, s, (1 - s) * H / 2 + dy]])
     return cv2.warpAffine(img, M, (W, H), flags=cv2.INTER_LINEAR, borderMode=borda)
 
@@ -239,16 +244,17 @@ def profundidade(nome, pos, W, H):
     d, passo, pers = _PROF[nome]
     k = min(max(pos / passo, 0), len(d) - 1); k0 = int(k); k1 = min(k0 + 1, len(d) - 1); f = k - k0
     m = d[k0].astype(np.float32) * (1 - f) + d[k1].astype(np.float32) * f
+    m = cv2.GaussianBlur(m, (0, 0), 6)  # mapa bem suave: borda serrilhada do mapa entorta linhas retas
     return cv2.resize(m / 255, (W, H), interpolation=cv2.INTER_LINEAR), float(pers[k0] * (1 - f) + pers[k1] * f)
 
 
 def orbita(t):
-    """Câmera 3D por cena: arco lateral (de um lado ao outro) + avanço. Em px de 1080 e fração de zoom."""
+    """Câmera 3D por cena: arco lateral (de um lado ao outro) + avanço. Em px da análise (540) e fração de zoom."""
     nome, ta, tb, _, _, op = cena_em(t)
     u = ease(min(1.0, max(0.0, (t - ta) / (tb - ta))))
     lado = -1 if CENAS.index(cena_em(t)) % 2 else 1  # alterna o sentido a cada corte
-    A = 60.0 if op.get("fim") else 120.0
-    return lado * A * (2 * u - 1), 0.25 * A * math.sin(math.pi * u), 0.10 * u
+    A = 12.0 if op.get("fim") else 30.0  # suave: deslocamento máx. ≈ 3% da largura (mais que isso entorta o cenário)
+    return lado * A * (2 * u - 1), 0.25 * A * math.sin(math.pi * u), 0.04 * u
 
 
 def camera(t, plano):
@@ -299,23 +305,31 @@ def render_quadro(t, final, cache_fr, diag=False):
     zoom, sx, sy, dx = camera(t, plano)
     zf, zp = dolly(t)
     # paralaxe: fundo (placa) anda 1,8x mais que o personagem
-    fundo = warp(placa, zoom * 1.015 * zf, (dx + sx) * f, sy * f, W, H)
+    zoom_f = cobre(zoom * 1.015 * zf, (dx + sx) * f, sy * f, W, H)
+    zoom_p = cobre(zoom * zp, (dx + sx) * f, sy * f, W, H)
+    fundo = warp(placa, zoom_f, (dx + sx) * f, sy * f, W, H)
     # câmera 3D: cada pixel do fundo anda conforme a profundidade, relativo ao personagem (pivô)
     dmap, dp = profundidade(nome, pos, W, H)
-    dmap = warp(dmap, zoom * 1.015 * zf, (dx + sx) * f, sy * f, W, H)
+    dmap = warp(dmap, zoom_f, (dx + sx) * f, sy * f, W, H)
     if op.get("sem_rosto"):
         dp = 0.5
     ox, oy, oz = orbita(t)
-    rel = dmap - dp
+    rel = np.clip(dmap - dp, -0.6, 0.6)
     X, Y = np.meshgrid(np.arange(W, dtype=np.float32), np.arange(H, dtype=np.float32))
-    esc = 1 + oz * rel * 2.2
-    fundo = cv2.remap(fundo, (W / 2 + (X - W / 2) / esc - ox * f * rel).astype(np.float32),
-                      (H * 0.55 + (Y - H * 0.55) / esc - oy * f * rel).astype(np.float32),
-                      cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
+    esc = 1 + oz * rel
+    mx = W / 2 + (X - W / 2) / esc - ox * f * rel
+    my = H * 0.55 + (Y - H * 0.55) / esc - oy * f * rel
+    # nunca amostrar fora da imagem (a borda espelhada duplicava o cenário): se precisar, aproxima um pouco
+    kx = (W / 2 - 1) / max(W / 2 - 1, float(np.abs(mx - W / 2).max()))
+    ky = min((H * 0.45 - 1) / max(H * 0.45 - 1, float((my - H * 0.55).max())),
+             H * 0.55 / max(H * 0.55, float((H * 0.55 - my).max())))
+    kk = min(kx, ky)
+    mx = W / 2 + (mx - W / 2) * kk; my = H * 0.55 + (my - H * 0.55) * kk
+    fundo = cv2.remap(fundo, mx.astype(np.float32), my.astype(np.float32), cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
+    desloc = float(np.abs(ox * f * rel).max() + np.abs(oy * f * rel).max()) / W
     paralaxe = abs(ox * f * (dp - float(np.percentile(dmap, 10)))) + abs(0.8 * dx * f)
-    frente = warp(img, zoom * zp, (dx + sx) * f, sy * f, W, H)
-    mask = warp(m, zoom * zp, (dx + sx) * f, sy * f, W, H, cv2.BORDER_CONSTANT)
-    zoom_p = zoom * zp
+    frente = warp(img, zoom_p, (dx + sx) * f, sy * f, W, H)
+    mask = warp(m, zoom_p, (dx + sx) * f, sy * f, W, H, cv2.BORDER_CONSTANT)
 
     def proj(px, py):  # ponto da análise (AW×AH) → tela, com a mesma câmera do personagem
         return ((px - AW / 2) * zoom_p + AW / 2 + dx + sx) * f, ((py - AH / 2) * zoom_p + AH / 2 + sy) * f
@@ -372,7 +386,7 @@ def render_quadro(t, final, cache_fr, diag=False):
         por[nome_ef] = por.get(nome_ef, 0.0) + float(c1[..., 0].mean())
         cob = np.maximum(cob, c1)
     return out, {"cobertura": cob[..., 0], "por_efeito": por, "rosto": (fx0, fy0, fx1, fy1), "mask": mask,
-                 "paralaxe": paralaxe, "n_obj": len(sprites)}
+                 "paralaxe": paralaxe, "desloc_3d": desloc, "fora_borda": 0.0 if kk >= 1 else 1 - kk, "n_obj": len(sprites)}
 
 
 # ---------- legendas e @ (ASS) ----------

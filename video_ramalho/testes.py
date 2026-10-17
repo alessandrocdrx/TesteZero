@@ -94,7 +94,9 @@ for j in range(0, N, 15):
     a_obj = float(cob[sl].max()); a_par = float(np.abs(par[sl]).max()) / W  # separação fundo × personagem
     janelas.append({"t": round(T[j], 2), "objetos_%": round(100 * a_obj, 2), "paralaxe_%": round(100 * a_par, 2),
                     "ok": a_obj >= 0.015 or a_par >= 0.015})
-res["4_forca_3d"] = {"janelas": janelas, "passou": all(w["ok"] for w in janelas)}
+desloc = max(d["desloc_3d"] for d in D)  # câmera 3D forte demais entorta e duplica o cenário
+res["4_forca_3d"] = {"desloc_3d_max_%": round(100 * desloc, 2), "janelas": janelas,
+                     "passou": all(w["ok"] for w in janelas) and desloc <= 0.04}
 piores["4_forca_3d"] = int(np.argmin(cob))
 
 # ---------- 5. Sincronia: cada efeito a até ±0,2 s da palavra ----------
