@@ -1,0 +1,26 @@
+{
+  "projeto": "Ramalho Fogões — anúncio vertical",
+  "tipo": "C",
+  "formato": {"w": 1080, "h": 1920, "fps": 30, "duracao_s": 30, "rascunho": [540, 960]},
+  "creditos_tela": ["@alessandrocdrx"],
+  "contato": {"whatsapp": "(41) 98485-1317", "regiao": "Curitiba e Região"},
+  "personagem": "a friendly Brazilian gas-stove repair technician in his late 30s, stocky build, short dark hair, light stubble, warm smile, wearing a plain heather-grey polo shirt with a small yellow-orange flame logo embroidered on the left chest and the text \"Ramalho Fogões\" under it, dark work trousers, black tool belt",
+  "cenario": "a bright modern Brazilian home kitchen with white marble-look tiles, black glass 5-burner gas cooktop, granite countertop, soft daylight",
+  "narracao": [
+    "Fogão com chama amarela, falhando ou sem acender?",
+    "Chama a Ramalho Fogões!",
+    "Conserto, regulagem, limpeza e conversão de gás.",
+    "Instalação, do fogão de casa ao industrial.",
+    "Chama azul é sinal de serviço bem feito.",
+    "Ramalho Fogões, Curitiba e Região.",
+    "Chama no WhatsApp: quarenta e um, nove oito quatro oito cinco, treze dezessete."
+  ],
+  "cenas": [
+    {"id": 1, "frase": 0, "plano": "fechado", "prompt": "extreme close-up of a gas stove burner with a weak, flickering, sputtering yellow-orange flame, a hand tries the knob again, [cenario], vertical 9:16, no text"},
+    {"id": 2, "frase": 1, "plano": "médio", "prompt": "[personagem] walks into [cenario] carrying a red toolbox, smiles at the camera and nods confidently, vertical 9:16, no text"},
+    {"id": 3, "frase": 2, "plano": "fechado", "prompt": "close-up of [personagem] adjusting a stove burner with a small wrench, then turning the knob, focused expression, [cenario], vertical 9:16, no text"},
+    {"id": 4, "frase": 3, "plano": "aberto", "prompt": "[personagem] standing next to a large stainless steel 6-burner industrial stove in a commercial kitchen, he lights it and all burners ignite with blue flames, vertical 9:16, no text"},
+    {"id": 5, "frase": 4, "plano": "médio", "prompt": "[personagem] lights the black glass cooktop in [cenario], all burners ignite in perfect clean blue flames, he looks at the camera and smiles proudly, slow push-in, vertical 9:16, no text"},
+    {"id": 6, "frase": 5, "plano": "médio", "prompt": "[personagem] facing the camera in [cenario] gives a big thumbs-up with a warm smile, blue flames burning behind him, vertical 9:16, no text"}
+  ]
+}

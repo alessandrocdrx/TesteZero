@@ -1,0 +1,11 @@
+{
+  "projeto": "Ramalho Fogões — anúncio vertical (tipo C)",
+  "flow_elevenlabs": "xxyyW8QMbbygGFQZluUg",
+  "estimativas_creditos": {
+    "folha_referencia_gemini-3-pro-image_4_opcoes": 4872,
+    "cena_5s_kling-omni-video_9x16_com_referencia": 3393,
+    "cena_5s_kling-2.5-turbo_9x16_sem_referencia": 2121,
+    "narracao_30s": 300
+  },
+  "itens": {}
+}
