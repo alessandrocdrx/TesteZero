@@ -11,6 +11,8 @@ etapa() { echo "[$(date +%H:%M:%S)] $*" | tee -a _render/producao.log; }
 
 etapa "análise (cenas já em cache são puladas)"
 python3 analisar.py cena01 cena02 cena03 cena04 cena05 cena06 > _render/analise.log 2>&1
+etapa "profundidade (cenas já em cache são puladas)"
+python3 profundidade.py cena01 cena02 cena03 cena04 cena05 cena06 > _render/profund.log 2>&1
 etapa "render final ${DE}–${ATE}s"
 python3 render.py --final --de "$DE" --ate "$ATE" --saida Ramalho_Fogoes.mp4 > _render/final.log 2>&1
 etapa "testes"

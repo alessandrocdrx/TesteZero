@@ -1,87 +1,92 @@
 {
- "projeto": "Ramalho Fogões — anúncio vertical",
- "tipo": "C",
- "formato": {
-  "w": 1080,
-  "h": 1920,
-  "fps": 30,
-  "duracao_s": 25,
-  "rascunho": [
-   540,
-   960
-  ]
- },
- "creditos_tela": [
-  "@alessandrocdrx"
- ],
- "contato": {
-  "whatsapp": "(41) 98485-1317",
-  "regiao": "Curitiba e Região"
- },
- "personagem": "Pixar-style 3D animated caricature of the exact man from the reference image (big head, small stocky body, curly dark hair, grey polo with yellow flame logo \"Ramalho Fogões\", blue jeans)",
- "cenario": "a bright modern kitchen, warm daylight",
- "narracao": [
-  "Fogão com chama amarela, falhando ou sem acender?",
-  "Chama a Ramalho Fogões!",
-  "Conserto, regulagem, limpeza e conversão de gás.",
-  "Instalação, do fogão de casa ao industrial.",
-  "Chama azul é sinal de serviço bem feito.",
-  "Ramalho Fogões, Curitiba e Região.",
-  "Chama no WhatsApp: quarenta e um, nove oito quatro oito cinco, treze dezessete."
- ],
- "cenas": [
-  {
-   "id": 1,
-   "frase": 0,
-   "plano": "fechado",
-   "prompt": "Pixar-style 3D animation. Extreme close-up of a gas stove burner on a black glass cooktop in a bright modern kitchen: a weak, flickering, sputtering yellow-orange flame that keeps dying out, a cartoon hand turns the knob again and the flame struggles, small puffs of smoke. Slow camera push-in, shallow depth of field, warm daylight, vertical 9:16 composition, high-quality 3D animation, no text, no people's faces.",
-   "video_s": "0.0–4.1",
-   "modelo": "kling-omni-video 9:16 5 s"
+  "projeto": "Ramalho Fogões — anúncio vertical",
+  "tipo": "C",
+  "formato": {
+    "w": 1080,
+    "h": 1920,
+    "fps": 30,
+    "duracao_s": 25,
+    "rascunho": [
+      540,
+      960
+    ]
   },
-  {
-   "id": 2,
-   "frase": 1,
-   "plano": "médio",
-   "prompt": "[personagem]. He walks into a bright modern kitchen through the doorway carrying a red toolbox, stops, smiles at the camera and nods confidently. Medium shot, his full upper body visible and centered, camera slowly tracking back, warm daylight, vertical 9:16 composition, high-quality 3D animation, no text.",
-   "video_s": "4.1–5.6",
-   "modelo": "kling-omni-video 9:16 5 s + referência travada"
+  "creditos_tela": [
+    "Edição: @alessandrocdrx (embaixo, centralizado)",
+    "Facebook: /ramalhofogoes (tela final)"
+  ],
+  "contato": {
+    "whatsapp": "(41) 98485-1317",
+    "regiao": "Curitiba e Região",
+    "facebook": "https://www.facebook.com/ramalhofogoes"
   },
-  {
-   "id": 3,
-   "frase": 2,
-   "plano": "fechado",
-   "prompt": "[personagem]. In a bright modern kitchen he leans over a black glass gas cooktop and carefully adjusts a burner with a small wrench, then cleans it with a brush, focused friendly expression, then looks up at the camera. Medium close shot showing his head, hands and the cooktop, gentle camera drift, warm daylight, vertical 9:16 composition, high-quality 3D animation, no text.",
-   "video_s": "5.6–9.25",
-   "modelo": "kling-omni-video 9:16 5 s + referência travada"
+  "personagem": "Pixar-style 3D animated caricature of the exact man from the reference image (big head, small stocky body, curly dark hair, grey polo with yellow flame logo \"Ramalho Fogões\", blue jeans)",
+  "cenario": "a bright modern kitchen, warm daylight",
+  "narracao": [
+    "Fogão com chama amarela, falhando ou sem acender?",
+    "Chama a Ramalho Fogões!",
+    "Conserto, regulagem, limpeza e conversão de gás.",
+    "Instalação, do fogão de casa ao industrial.",
+    "Chama azul é sinal de serviço bem feito.",
+    "Ramalho Fogões, Curitiba e Região.",
+    "Chama no WhatsApp: quarenta e um, nove oito quatro oito cinco, treze dezessete."
+  ],
+  "cenas": [
+    {
+      "id": 1,
+      "frase": 0,
+      "plano": "fechado",
+      "prompt": "Pixar-style 3D animation. Close-up of an old household gas stove in a cozy home kitchen. One burner has a lazy, tall, wavy YELLOW-ORANGE flame that flickers weakly and leaves a little soot; the burner next to it clicks with tiny ignition sparks but fails to light. No hands, no people in frame. Slow lateral camera dolly from left to right past a kettle in the soft-focus foreground, strong parallax and depth, shallow depth of field, warm daylight, vertical 9:16 composition, high-quality 3D animation, no text.",
+      "video_s": "0.0–4.1",
+      "modelo": "kling-omni-video 9:16 5 s"
+    },
+    {
+      "id": 2,
+      "frase": 1,
+      "plano": "médio",
+      "prompt": "[personagem]. He walks into a bright modern kitchen through the doorway carrying a red toolbox, stops, smiles at the camera and nods confidently. Medium shot, his full upper body visible and centered, camera slowly tracking back, warm daylight, vertical 9:16 composition, high-quality 3D animation, no text.",
+      "video_s": "4.1–5.6",
+      "modelo": "kling-omni-video 9:16 5 s + referência travada"
+    },
+    {
+      "id": 3,
+      "frase": 2,
+      "plano": "fechado",
+      "prompt": "[personagem]. In a bright modern kitchen the gas cooktop is TURNED OFF and cold, with NO FLAME anywhere. The burner caps are removed and lying on a cloth; he scrubs one burner cap with a small brush, then fits it back in place on the burner and checks it with a screwdriver, focused friendly expression, then looks up at the camera and smiles. Medium close shot of his head, hands and the cooktop, slow camera orbit around him with strong parallax and depth, warm daylight, vertical 9:16 composition, high-quality 3D animation, no text, no fire.",
+      "video_s": "5.6–9.25",
+      "modelo": "kling-omni-video 9:16 5 s + referência travada",
+      "uso": "trecho 1,6–5,0 s do clipe: encaixa a tampa e regula a chama com a chave de fenda, depois sorri (a limpeza do início ficou com chama acesa e foi cortada)"
+    },
+    {
+      "id": 4,
+      "frase": 3,
+      "plano": "aberto",
+      "prompt": "[personagem]. He stands next to a large stainless steel 6-burner industrial stove in a clean commercial restaurant kitchen, turns the knob and all burners ignite one after another with strong clean blue flames, he gestures proudly at the stove and smiles at the camera. Wide medium shot with his whole body and the stove visible, slow camera arc, bright lighting, vertical 9:16 composition, high-quality 3D animation, no text.",
+      "video_s": "9.25–11.8",
+      "modelo": "kling-omni-video 9:16 5 s + referência travada"
+    },
+    {
+      "id": 5,
+      "frase": 4,
+      "plano": "médio",
+      "prompt": "[personagem]. In a bright modern kitchen he turns the knob of a black glass gas cooktop; all burners ignite in perfect clean blue flames with a soft whoosh of light; he looks at the camera with a proud warm smile. Slow camera push-in, medium shot with his full upper body and the cooktop visible, warm daylight, vertical 9:16 composition, high-quality 3D animation, no text.",
+      "video_s": "11.8–15.15",
+      "modelo": "kling-omni-video 9:16 5 s + referência travada",
+      "uso": "trecho 2,75–5,0 s do clipe (câmera lenta 0,67×): depois que a mão sai do fogo"
+    },
+    {
+      "id": 6,
+      "frase": 5,
+      "plano": "médio",
+      "prompt": "[personagem]. He faces the camera in a bright modern kitchen and gives a big thumbs-up with a warm cheerful smile, a gas cooktop with clean blue flames burning softly behind him. Medium shot, his upper body centered, slow camera push-in, warm daylight, vertical 9:16 composition, high-quality 3D animation, no text.",
+      "video_s": "15.15–25.0 (17.6+ tela final)",
+      "modelo": "kling-omni-video 9:16 5 s + referência travada"
+    }
+  ],
+  "referencia_travada": {
+    "no": "WlT16fAfvlktCqC4NdTx",
+    "geracao": "r3kA9vrQIjlZWcyPbQR3",
+    "arquivo": "cache/referencia/caricatura2.png"
   },
-  {
-   "id": 4,
-   "frase": 3,
-   "plano": "aberto",
-   "prompt": "[personagem]. He stands next to a large stainless steel 6-burner industrial stove in a clean commercial restaurant kitchen, turns the knob and all burners ignite one after another with strong clean blue flames, he gestures proudly at the stove and smiles at the camera. Wide medium shot with his whole body and the stove visible, slow camera arc, bright lighting, vertical 9:16 composition, high-quality 3D animation, no text.",
-   "video_s": "9.25–11.8",
-   "modelo": "kling-omni-video 9:16 5 s + referência travada"
-  },
-  {
-   "id": 5,
-   "frase": 4,
-   "plano": "médio",
-   "prompt": "[personagem]. In a bright modern kitchen he turns the knob of a black glass gas cooktop; all burners ignite in perfect clean blue flames with a soft whoosh of light; he looks at the camera with a proud warm smile. Slow camera push-in, medium shot with his full upper body and the cooktop visible, warm daylight, vertical 9:16 composition, high-quality 3D animation, no text.",
-   "video_s": "11.8–15.15",
-   "modelo": "kling-omni-video 9:16 5 s + referência travada"
-  },
-  {
-   "id": 6,
-   "frase": 5,
-   "plano": "médio",
-   "prompt": "[personagem]. He faces the camera in a bright modern kitchen and gives a big thumbs-up with a warm cheerful smile, a gas cooktop with clean blue flames burning softly behind him. Medium shot, his upper body centered, slow camera push-in, warm daylight, vertical 9:16 composition, high-quality 3D animation, no text.",
-   "video_s": "15.15–25.0 (17.6+ tela final)",
-   "modelo": "kling-omni-video 9:16 5 s + referência travada"
-  }
- ],
- "referencia_travada": {
-  "no": "WlT16fAfvlktCqC4NdTx",
-  "geracao": "r3kA9vrQIjlZWcyPbQR3",
-  "arquivo": "cache/referencia/caricatura2.png"
- }
+  "camera_3d": "Depth Anything V2 small (ONNX): profundidade por pixel do fundo; câmera orbita em torno do personagem e avança (cada corte alterna o sentido)"
 }

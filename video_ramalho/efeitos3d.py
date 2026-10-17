@@ -100,8 +100,12 @@ def botao():
 
 
 def pino():
-    gota = lathe([(0.001, -1.0), (0.4, -0.9), (0.55, -0.6), (0.45, -0.25), (0.2, 0.2), (0.001, 0.6)], 26)
-    return juntar((gota, (230, 60, 60), False))
+    # pino de mapa clássico: cabeça redonda em cima, ponta embaixo, furo branco na frente
+    cab = [(0.001, -1.0)] + [(0.55 * math.sin(a), -0.45 - 0.55 * math.cos(a)) for a in np.linspace(0.25, 2.3, 9)]
+    gota = lathe(cab + [(0.12, 0.55), (0.001, 0.95)], 32)
+    furo = transl(extrude([(0.2 * math.cos(a), -0.45 + 0.2 * math.sin(a)) for a in np.linspace(0, 2 * np.pi, 18)[:-1]], 0.04),
+                  (0, 0, -0.53))
+    return juntar((gota, (225, 40, 45), False), (furo, (255, 255, 255), False))
 
 
 def telefone():

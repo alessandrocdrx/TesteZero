@@ -50,9 +50,9 @@ A_FIM = (5.0 - 3.05) / (FIM - 17.6)
 CENAS = [  # trechos do clipe escolhidos pela folha de contato
     ("cena01", 0.0, 4.1, (1.0, 0.6), 1.04, {"sem_rosto": True}),               # chama amarela falha e apaga
     ("cena02", 4.1, 5.6, (1.8, 2.2 - 1.8 * 4.1), 1.0, {}),                     # entra com a caixa e sorri
-    ("cena03", 5.6, 9.25, (1.2, 0.5 - 1.2 * 5.6), 1.02, {}),                   # chave, depois escova
+    ("cena03", 5.6, 9.25, (3.4 / 3.65, 1.6 - 3.4 / 3.65 * 5.6), 1.02, {}),   # encaixa a tampa e regula a chama, sorri
     ("cena04", 9.25, 11.8, (1.3, 1.6 - 1.3 * 9.25), 1.0, {}),                  # acende o industrial e mostra
-    ("cena05", 11.8, 15.15, (1.0, 2.0 - T_AZUL), 1.06, {}),                    # chama azul
+    ("cena05", 11.8, 15.15, (0.672, 2.75 - 0.672 * 11.8), 1.06, {}),          # chama azul (só depois que a mão sai do fogo)
     ("cena06", 15.15, 17.6, (1.0, 0.6 - 15.15), 1.04, {}),                     # joinha
     # tela final: o fim do clipe 6 em câmera lenta, desfocado e escurecido, com o selo, o telefone e o número
     ("cena06", 17.6, FIM, (A_FIM, 3.05 - 17.6 * A_FIM), 1.04, {"fim": True}),
@@ -165,13 +165,13 @@ def efeitos(t, info):
         add(e3.anel_de_chamas(t * 1.4, n=6, cor=(30, 110, 255)), e3.rot(0.4, 0.8 * t, 0), cx + 190 * math.cos(a),
             min(fy1 + 140, 0.62 * AH), 1.0 + 0.3 * math.sin(a), 220 * k, True, "industrial")
     # 11. "Chama azul": dois anéis de chama orbitando em sentidos opostos, abaixo do rosto
-    t0 = T_AZUL - 0.05; k = env(t, t0, CORTES[5] - t0 + 0.1)
+    t0 = T_AZUL - 0.05; k = env(t, t0, palavra("bem") - t0)  # saem quando entra o check (juntos viravam borrão)
     if k > 0:
         for sent, fase, dy in ((1, 0.0, 0.0), (-1, math.pi, 70.0)):
             a = sent * 2.2 * (t - t0) + fase
-            z = 1.0 + 0.32 * math.sin(a)  # z<1 na frente, z>1 atrás
+            z = 1.0 + 0.16 * math.sin(a)  # z<1 na frente, z>1 atrás (mais que isso vira borrão no peito)
             add(e3.anel_de_chamas(t * (1.3 + 0.2 * sent), cor=(30, 110, 255)), e3.rot(0.42, 0.9 * t * sent, 0.0),
-                cx + 190 * math.cos(a), min(fy1 + 130, 0.6 * AH) + dy + 18 * math.sin(a + 0.6), z, 215 * k, True, "chama azul")
+                cx + 190 * math.cos(a), min(fy1 + 130, 0.6 * AH) + dy + 18 * math.sin(a + 0.6), z, 175 * k, True, "chama azul")
     # 12. "bem feito": check 3D com brilho, à direita do peito
     t12 = palavra("bem"); k = env(t, t12 - 0.05, CORTES[5] - t12 + 0.15)
     if k > 0:
@@ -228,6 +228,29 @@ def warp(img, s, dx, dy, W, H, borda=cv2.BORDER_REFLECT):
     return cv2.warpAffine(img, M, (W, H), flags=cv2.INTER_LINEAR, borderMode=borda)
 
 
+_PROF = {}
+
+
+def profundidade(nome, pos, W, H):
+    """Disparidade do fundo (0 longe … 1 perto) no quadro `pos` (24 fps, fracionário) e a do personagem (pivô)."""
+    if nome not in _PROF:
+        z = np.load(os.path.join(DIR, f"profund_{nome}.npz"))
+        _PROF[nome] = (z["d"], int(z["passo"]), z["pers"])
+    d, passo, pers = _PROF[nome]
+    k = min(max(pos / passo, 0), len(d) - 1); k0 = int(k); k1 = min(k0 + 1, len(d) - 1); f = k - k0
+    m = d[k0].astype(np.float32) * (1 - f) + d[k1].astype(np.float32) * f
+    return cv2.resize(m / 255, (W, H), interpolation=cv2.INTER_LINEAR), float(pers[k0] * (1 - f) + pers[k1] * f)
+
+
+def orbita(t):
+    """Câmera 3D por cena: arco lateral (de um lado ao outro) + avanço. Em px de 1080 e fração de zoom."""
+    nome, ta, tb, _, _, op = cena_em(t)
+    u = ease(min(1.0, max(0.0, (t - ta) / (tb - ta))))
+    lado = -1 if CENAS.index(cena_em(t)) % 2 else 1  # alterna o sentido a cada corte
+    A = 60.0 if op.get("fim") else 120.0
+    return lado * A * (2 * u - 1), 0.25 * A * math.sin(math.pi * u), 0.10 * u
+
+
 def camera(t, plano):
     """Câmera virtual: plano da cena + zoom de respiração com a voz + leve câmera na mão + deslocamento p/ paralaxe."""
     zoom = plano * (1.0 + 0.025 * energia(t))
@@ -274,7 +297,20 @@ def render_quadro(t, final, cache_fr, diag=False):
     zoom, sx, sy, dx = camera(t, plano)
     zf, zp = dolly(t)
     # paralaxe: fundo (placa) anda 1,8x mais que o personagem
-    fundo = warp(placa, zoom * 1.015 * zf, (1.8 * dx + sx) * f, sy * f, W, H)
+    fundo = warp(placa, zoom * 1.015 * zf, (dx + sx) * f, sy * f, W, H)
+    # câmera 3D: cada pixel do fundo anda conforme a profundidade, relativo ao personagem (pivô)
+    dmap, dp = profundidade(nome, pos, W, H)
+    dmap = warp(dmap, zoom * 1.015 * zf, (dx + sx) * f, sy * f, W, H)
+    if op.get("sem_rosto"):
+        dp = 0.5
+    ox, oy, oz = orbita(t)
+    rel = dmap - dp
+    X, Y = np.meshgrid(np.arange(W, dtype=np.float32), np.arange(H, dtype=np.float32))
+    esc = 1 + oz * rel * 2.2
+    fundo = cv2.remap(fundo, (W / 2 + (X - W / 2) / esc - ox * f * rel).astype(np.float32),
+                      (H * 0.55 + (Y - H * 0.55) / esc - oy * f * rel).astype(np.float32),
+                      cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
+    paralaxe = abs(ox * f * (dp - float(np.percentile(dmap, 10)))) + abs(0.8 * dx * f)
     frente = warp(img, zoom * zp, (dx + sx) * f, sy * f, W, H)
     mask = warp(m, zoom * zp, (dx + sx) * f, sy * f, W, H, cv2.BORDER_CONSTANT)
     zoom_p = zoom * zp
@@ -295,7 +331,7 @@ def render_quadro(t, final, cache_fr, diag=False):
     if op.get("fim"):  # tela final: a cena vira fundo desfocado e escurecido; os objetos ficam livres
         u = min(1.0, (t - ta) / 0.4)
         cena = frente * mask[..., None] + fundo * (1 - mask[..., None])
-        fundo = cena * (1 - u) + cv2.GaussianBlur(cena, (0, 0), 1 + 17 * u * f) * u * (1 - 0.55 * u)
+        fundo = cena * (1 - u) + cv2.GaussianBlur(cena, (0, 0), 1 + 6 * u * f) * u * (1 - 0.5 * u)  # ele continua reconhecível
         mask = mask * 0
     out = fundo.copy()
     objs = sorted(efeitos(t, info), key=lambda o: -o[3])  # de trás para frente
@@ -334,7 +370,7 @@ def render_quadro(t, final, cache_fr, diag=False):
         por[nome_ef] = por.get(nome_ef, 0.0) + float(c1[..., 0].mean())
         cob = np.maximum(cob, c1)
     return out, {"cobertura": cob[..., 0], "por_efeito": por, "rosto": (fx0, fy0, fx1, fy1), "mask": mask,
-                 "paralaxe": 0.8 * dx * f, "n_obj": len(sprites)}
+                 "paralaxe": paralaxe, "n_obj": len(sprites)}
 
 
 # ---------- legendas e @ (ASS) ----------
@@ -351,9 +387,9 @@ def gerar_ass(path, W, H):
          "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, "
          "Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
          # karaokê: Secondary = ainda não falada (branco), Primary = palavra atual/falada (amarelo-chama)
-         f"Style: Leg,Liberation Sans,{int(78*k)},{AMARELO},{BRANCO},{TINTA},&H80000000,1,0,0,0,100,100,1,0,1,{6*k:.1f},{3*k:.1f},2,{int(70*k)},{int(170*k)},{int(470*k)},1",
+         f"Style: Leg,Liberation Sans,{int(76*k)},{AMARELO},{BRANCO},{TINTA},&H80000000,1,0,0,0,100,100,1,0,1,{6*k:.1f},{3*k:.1f},2,{int(160*k)},{int(160*k)},{int(540*k)},1",
          f"Style: Big,Liberation Sans,{int(150*k)},&H00FFB040,&H00FFB040,&H00401000,&H80000000,1,0,0,0,100,100,3,0,1,{9*k:.1f},{5*k:.1f},5,40,40,0,1",
-         f"Style: At,Liberation Sans,{int(40*k)},&H40FFFFFF,&H40FFFFFF,&H60000000,&H00000000,1,0,0,0,100,100,1,0,1,{2.5*k:.1f},0,7,0,0,0,1",
+         f"Style: At,Liberation Sans,{int(38*k)},&H20FFFFFF,&H20FFFFFF,&H60000000,&H00000000,1,0,0,0,100,100,1,0,1,{2.5*k:.1f},0,5,0,0,0,1",
          "", "[Events]", "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"]
     # frases curtas: quebra em pontuação ou a cada 4 palavras
     frases, cur = [], []
@@ -376,20 +412,21 @@ def gerar_ass(path, W, H):
             continue
         L.append(f"Dialogue: 1,{ts(st)},{ts(en)},Leg,,0,0,0,,{{\\fad(80,120)\\fscx90\\fscy90\\t(0,140,\\fscx100\\fscy100)}}{txt}")
     pop = "{\\fad(120,300)\\fscx60\\fscy60\\t(0,200,\\fscx112\\fscy112)\\t(200,380,\\fscx100\\fscy100)}"
-    L.append(f"Dialogue: 2,{ts(T_AZUL - 0.05)},{ts(T_AZUL + 1.6)},Big,,0,0,0,,{{\\pos({W//2},{int(H*0.665)})}}{pop}CHAMA AZUL")
+    L.append(f"Dialogue: 2,{ts(T_AZUL - 0.05)},{ts(T_AZUL + 1.6)},Big,,0,0,0,,{{\\pos({W//2},{int(H*0.585)})}}{pop}CHAMA AZUL")
     t4 = palavra("Ramalho", 0)
-    L.append(f"Dialogue: 2,{ts(t4 - 0.05)},{ts(CORTES[2])},Big,,0,0,0,,{{\\pos({int(W*0.46)},{int(H*0.665)})\\fs{int(104*k)}\\c&H0030C8FF&}}{pop}RAMALHO FOGÕES")
-    # tela final: nome, número e região (o número entra quando é falado e fica até o fim)
-    cx = int(W * 0.46)
-    L.append(f"Dialogue: 2,{ts(CORTES[6] + 0.1)},{ts(FIM)},Big,,0,0,0,,{{\\pos({cx},{int(H*0.385)})\\fs{int(100*k)}\\c&H0030C8FF&}}{pop}RAMALHO FOGÕES")
-    L.append(f"Dialogue: 2,{ts(palavra('41'))},{ts(FIM)},Big,,0,0,0,,{{\\pos({cx},{int(H*0.605)})\\fs{int(92*k)}\\c&H00FFFFFF&}}{pop}(41) 98485-1317")
+    L.append(f"Dialogue: 2,{ts(t4 - 0.05)},{ts(CORTES[2])},Big,,0,0,0,,{{\\pos({W//2},{int(H*0.585)})\\fs{int(84*k)}\\c&H0030C8FF&}}{pop}RAMALHO FOGÕES")
+    # tela final: nome, número, região e Facebook, centralizados (o número entra quando é falado e fica até o fim)
+    cx = W // 2
+    L.append(f"Dialogue: 2,{ts(CORTES[6] + 0.1)},{ts(FIM)},Big,,0,0,0,,{{\\pos({cx},{int(H*0.385)})\\fs{int(84*k)}\\c&H0030C8FF&}}{pop}RAMALHO FOGÕES")
+    L.append(f"Dialogue: 2,{ts(palavra('41'))},{ts(FIM)},Big,,0,0,0,,{{\\pos({cx},{int(H*0.605)})\\fs{int(84*k)}\\c&H00FFFFFF&}}{pop}(41) 98485-1317")
     L.append(f"Dialogue: 2,{ts(palavra('41') + 0.3)},{ts(FIM)},Big,,0,0,0,,{{\\pos({cx},{int(H*0.665)})\\fs{int(58*k)}\\c&H00FFB040&}}{pop}Curitiba e Região")
-    # @ flutuando: pequenos \move de ida e volta, dentro da safe zone (topo 250 px, esquerda 60 px)
-    x0, y0 = int(70 * k), int(270 * k)
+    L.append(f"Dialogue: 2,{ts(palavra('41') + 0.9)},{ts(FIM)},Big,,0,0,0,,{{\\pos({cx},{int(H*0.715)})\\fs{int(52*k)}\\c&H00FFFFFF&}}{pop}Facebook: /ramalhofogoes")
+    # crédito do editor flutuando embaixo, centralizado, dentro da safe zone (base H-420)
+    x0, y0 = W // 2, H - int(445 * k)
     t = 0.0
     while t < 60:
-        a, b = (y0, y0 + int(10 * k)) if int(t / 2) % 2 == 0 else (y0 + int(10 * k), y0)
-        L.append(f"Dialogue: 3,{ts(t)},{ts(t + 2)},At,,0,0,0,,{{\\move({x0},{a},{x0 + int(4*k)},{b})}}@alessandrocdrx")
+        a, b = (y0, y0 - int(8 * k)) if int(t / 2) % 2 == 0 else (y0 - int(8 * k), y0)
+        L.append(f"Dialogue: 3,{ts(t)},{ts(t + 2)},At,,0,0,0,,{{\\move({x0},{a},{x0},{b})}}Edição: @alessandrocdrx")
         t += 2
     open(path, "w").write("\n".join(L) + "\n")
 

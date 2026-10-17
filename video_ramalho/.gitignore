@@ -3,3 +3,4 @@ cache/placa/
 _render/
 __pycache__/
 cache/manifesto.json.lock
+cache/modelos/

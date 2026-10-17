@@ -214,20 +214,22 @@
       "criado": "2026-10-17 17:51:14"
     },
     "clipe_cena01": {
-      "chave": "17cfb1bffb917e90",
+      "chave": "dec7aaf114482644",
       "params": {
         "modelo": "kling-omni-video",
         "aspect": "9:16",
         "dur": 5,
         "node": "jKOYnXL2j51mVVTUJxn4",
-        "referencia": null
+        "referencia": null,
+        "versao": 2
       },
       "seed": null,
       "arquivo": "clipes/cena01.mp4",
-      "sha256": "c7d1851c76820769e0844ab165a29c1d84f1fb98ef5b4223c38bb78e3c66d122",
-      "criado": "2026-10-17 18:16:41",
-      "generation_id": "DbuboL1VOj2pUbSI9bM6",
-      "creditos": 3393
+      "sha256": "7df1d502ec5bbd5340b2b2164cde48fa48864cc7fb0b57c29c519d92ebc5d936",
+      "criado": "2026-10-17 19:11:40",
+      "generation_id": "Rux1nSDNlChF6aLY3Cgq",
+      "creditos": 3393,
+      "motivo": "v1 tinha mão dentro da chama"
     },
     "clipe_cena02": {
       "chave": "56e4904d24b36002",
@@ -246,20 +248,22 @@
       "creditos": 3393
     },
     "clipe_cena03": {
-      "chave": "be43b2f128de9aac",
+      "chave": "04f2210247ee7809",
       "params": {
         "modelo": "kling-omni-video",
         "aspect": "9:16",
         "dur": 5,
         "node": "zQ1ZIl78PfVLdteZcjen",
-        "referencia": "WlT16fAfvlktCqC4NdTx"
+        "referencia": "WlT16fAfvlktCqC4NdTx",
+        "versao": 2
       },
       "seed": null,
       "arquivo": "clipes/cena03.mp4",
-      "sha256": "9926e347cdab417e1ace2a3ecfa888116a11d54abce7ed83aedcb0fd0ea780ae",
-      "criado": "2026-10-17 18:16:41",
-      "generation_id": "JqxIAA6rEWHkyIAzJC8S",
-      "creditos": 3393
+      "sha256": "966135b989e0da25e088cd60a088424f7c05bf2dd5c746e13f870f682169bc30",
+      "criado": "2026-10-17 19:11:40",
+      "generation_id": "1AROQY0Nu2xHogEroC74",
+      "creditos": 3393,
+      "motivo": "v1 passava escova com a chama acesa"
     },
     "clipe_cena04": {
       "chave": "6c59f2fa7a4fc353",
@@ -378,6 +382,66 @@
       "arquivo": "analise_cena01.npz",
       "sha256": "b4fce8bd4ac8349b1293dbdf1891212996428cd81bdab7795ff2c0c10bbb022a",
       "criado": "2026-10-17 18:36:06"
+    },
+    "profund_cena05": {
+      "chave": "19373e931b4635f1",
+      "params": {
+        "clip_sha256": "4467bac48df61b9fad56332de1a28cccc61f99d6c57aa2938344c0bae228e2a5",
+        "modelo": "depth-anything-v2-small",
+        "w": 294,
+        "h": 518,
+        "passo": 3,
+        "v": 1
+      },
+      "seed": null,
+      "arquivo": "profund_cena05.npz",
+      "sha256": "1c77b59287ceaccc9a1af75a59717e5a98be3f47ebb1f50600ef3e6b78648db7",
+      "criado": "2026-10-17 19:08:38"
+    },
+    "profund_cena02": {
+      "chave": "80717a7ccc5f404d",
+      "params": {
+        "clip_sha256": "49bfb15496affc61affbb441933c59cb17492e16864a5577e56f27ddc269c5a8",
+        "modelo": "depth-anything-v2-small",
+        "w": 294,
+        "h": 518,
+        "passo": 3,
+        "v": 1
+      },
+      "seed": null,
+      "arquivo": "profund_cena02.npz",
+      "sha256": "438f169182848fe1f721fc62d0ed7d9a2da273cebe843b44a34c952a7e440f97",
+      "criado": "2026-10-17 19:09:20"
+    },
+    "profund_cena04": {
+      "chave": "b39c4f4609c8f759",
+      "params": {
+        "clip_sha256": "3f26466129031cdc64e49414fbb4af972a96d240d48ffd6c497e8b512dcb2713",
+        "modelo": "depth-anything-v2-small",
+        "w": 294,
+        "h": 518,
+        "passo": 3,
+        "v": 1
+      },
+      "seed": null,
+      "arquivo": "profund_cena04.npz",
+      "sha256": "73458eb0d93f83bc8adc916dcd3129cb83073ffa3f274f99e655c66779ff2b1d",
+      "criado": "2026-10-17 19:09:53"
+    },
+    "profund_cena06": {
+      "chave": "dae1255aa48df1f8",
+      "params": {
+        "clip_sha256": "aa6a007be3c7918ca8bb779d79953933da7879a24ce0572242e5b52ee6a309f8",
+        "modelo": "depth-anything-v2-small",
+        "w": 294,
+        "h": 518,
+        "passo": 3,
+        "v": 1
+      },
+      "seed": null,
+      "arquivo": "profund_cena06.npz",
+      "sha256": "ebe78b5b8a7404ba26adb31eac7a421ceaecf148630898a7f021858a6e47f538",
+      "criado": "2026-10-17 19:10:31"
     }
   }
 }
