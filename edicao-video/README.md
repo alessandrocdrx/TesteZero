@@ -22,6 +22,13 @@ Shishkin, em `cenarios/`). No sorriso final, o sonho acaba e ela volta para o qu
 | Só a voz (clímax) | Noite de luar no rio | a lua ao lado dela, partículas que respiram com a voz |
 | Refrão final → sorriso | Estepe → quarto real | o sonho termina |
 
+**Câmera virtual (o que tira o vídeo do estático):**
+- A cada meia frase, o enquadramento muda (aberto → médio → close), com "snap zoom" de 0,45 s e drift de câmera na mão (`SHOTS`).
+- Parallax 2.5D: a pintura se move 1,8× mais que ela, então o fundo ganha profundidade.
+- A troca de mundo é um "dolly zoom": o quadro antigo passa correndo pela câmera, com blur radial e flash quente, e o novo se assenta. Ela não muda de tamanho nessa hora.
+- No clímax só de voz, um único push contínuo de 14 s, do plano aberto ao close.
+- O quadro respira com a voz dela, e as legendas sobem para o lugar.
+
 Técnica: ela é recortada quadro a quadro com o MediaPipe (segmentação multiclasse + máscara fixa do
 microfone), a borda é refinada com filtro guiado, e os fios de cabelo são descontaminados. O fundo do
 quarto visto através deles é estimado localmente e trocado pela pintura. Onde ela é sólida, o pixel

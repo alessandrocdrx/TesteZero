@@ -28,9 +28,35 @@ SCENES = [
     ("vento_1", 78.0, 83.9, (760, 900), (1.05, 1.08)),
     ("room", 82.4, 99.0, None, None),
 ]
-XFADE = {  # how long each scene takes to arrive (organic dissolve)
-    "vento_1": 2.0, "livres_2": 1.2, "sol_1": 1.4, "rosas_2": 1.0, "floresta_3": 1.2, "lua_2": 0.9, "room": 1.4,
+XFADE = {  # how long each scene takes to arrive; after the first, each world change is a fast dolly-zoom rush
+    "vento_1": 2.0, "livres_2": 0.9, "sol_1": 0.9, "rosas_2": 0.8, "floresta_3": 0.9, "lua_2": 0.9, "room": 1.4,
 }
+
+# virtual camera, one framing per half-phrase: (start, zoom from, zoom to, framing). Her source is already a
+# close-up (face ~54% of the width), so the range is 1.02-1.30; she is never shrunk (her body meets the frame edge)
+FRAMING = {"W": (0.0, 0.318), "M": (1.0, 0.335), "C": (1.0, 0.36)}  # (centre her horizontally, face height)
+SHOTS = [
+    (0.0, 1.02, 1.05, "W"),
+    (5.2, 1.13, 1.18, "M"),    # punch in on "ветра", with the gust
+    (7.8, 1.03, 1.07, "W"),    # out: the steppe
+    (11.4, 1.12, 1.16, "M"),
+    (15.2, 1.16, 1.20, "M"),   # rush into the sunrise
+    (18.6, 1.03, 1.06, "W"),   # wide as the birds lift on "свободно"
+    (24.0, 1.22, 1.28, "C"),   # "where we were so happy"
+    (27.8, 1.12, 1.15, "M"),
+    (31.4, 1.03, 1.08, "W"),   # the Caucasus
+    (35.6, 1.16, 1.21, "M"),   # sun bloom on "солнце"
+    (39.7, 1.04, 1.09, "W"),   # light pouring on the mountains
+    (43.6, 1.22, 1.27, "C"),   # "светом"
+    (46.7, 1.05, 1.10, "W"),   # rose valley
+    (50.4, 1.22, 1.29, "C"),   # rose burst + her smile
+    (55.4, 1.04, 1.09, "W"),   # forest
+    (59.4, 1.14, 1.19, "M"),
+    (63.6, 1.03, 1.30, "C"),   # her voice alone: one unbroken 14 s push from wide to close
+    (78.0, 1.12, 1.16, "M"),
+    (82.4, 1.08, 1.02, "W"),   # back home, the camera settles
+]
+PARALLAX = 1.8   # the painting moves 1.8x the camera: depth behind her
 
 
 class Painting:
@@ -48,6 +74,57 @@ class Painting:
         cy = self.h / 2 - (self.h - ch) * 0.35  # keep more sky than ground
         M = np.float32([[W / cw, 0, -(cx - cw / 2) * W / cw], [0, H / ch, -(cy - ch / 2) * H / ch]])
         return cv2.warpAffine(self.img, M, (W, H), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT)
+
+
+def ease(x):
+    return smooth(smooth(x))
+
+
+def camera(t, fx, fy, e):
+    """zoom, translation (1080 coords) for her layer and for the painting behind her"""
+    j = max(k for k, sh in enumerate(SHOTS) if sh[0] <= t)
+
+    def state(k):
+        a, z0, z1, fr = SHOTS[k]
+        b = SHOTS[k + 1][0] if k + 1 < len(SHOTS) else C.DUR
+        z = z0 + (z1 - z0) * smooth((t - a) / (b - a))
+        cen, yq = FRAMING[fr]
+        return np.array([z, fx + (W / 2 - fx) * cen, H * yq])
+
+    cur = state(j)
+    if j > 0:
+        a = SHOTS[j][0]
+        dur = 0.45 if SHOTS[j][1] > SHOTS[j - 1][2] else 0.75  # snap in, ease out
+        w = ease((t - a) / dur)
+        cur = state(j - 1) * (1 - w) + cur * w
+    z, qx, qy = cur
+    z *= 1 + 0.012 * e   # the frame breathes with her voice
+    dx = 4 * math.sin(6.283 * 0.13 * t) + 2.5 * math.sin(6.283 * 0.31 * t + 1.3)   # hand-held drift
+    dy = 3 * math.sin(6.283 * 0.11 * t + 0.7) + 2 * math.sin(6.283 * 0.27 * t + 2.1)
+
+    def place(zz, k):
+        tx = min(max(qx + k * dx - zz * fx, W * (1 - zz)), 0)
+        ty = min(max(qy + k * dy - zz * fy, H * (1 - zz)), 0)
+        return np.float32([[zz, 0, tx], [0, zz, ty]])
+
+    zb = 1 + (z - 1) * PARALLAX
+    return place(z, 1.0), place(zb, PARALLAX), (qx, qy)
+
+
+def around(M, s, cx, cy):
+    """M followed by an extra zoom s about the screen point (cx, cy)"""
+    S = np.float32([[s, 0, (1 - s) * cx], [0, s, (1 - s) * cy], [0, 0, 1]])
+    return (S @ np.vstack([M, [0, 0, 1]]))[:2].astype(np.float32)
+
+
+def zoom_blur(img, cx, cy, s):
+    q = cv2.resize(img, (W // 4, H // 4), interpolation=cv2.INTER_AREA)
+    acc = np.zeros_like(q)
+    for k in range(8):
+        z = 1 + s * 0.09 * k / 7
+        M = np.float32([[z, 0, (1 - z) * cx / 4], [0, z, (1 - z) * cy / 4]])
+        acc += cv2.warpAffine(q, M, (W // 4, H // 4), borderMode=cv2.BORDER_REFLECT)
+    return cv2.resize(acc / 8, (W, H), interpolation=cv2.INTER_LINEAR)
 
 
 def noise_field(seed, scale=7):
@@ -92,6 +169,15 @@ class Matte:
         return np.clip(a, 0, 1)
 
 
+def face_mask(face, M, i):
+    """1 where effects may appear, 0 on her face and hair, following the camera"""
+    cx, cy = face.at(i)
+    z = float(M[0, 0])
+    cx, cy, r = z * cx + M[0, 2], z * cy + M[1, 2], face.r * z
+    d = np.sqrt(((face.xx - cx) / (r * 0.95)) ** 2 + ((face.yy - cy - r * 0.15) / (r * 1.2)) ** 2)
+    return cv2.resize(np.clip((d - 1.0) / 0.35, 0, 1), (W, H), interpolation=cv2.INTER_LINEAR)
+
+
 def main(src_path, npz, bg_dir, model, out_path):
     cap = cv2.VideoCapture(src_path)
     frames = []
@@ -108,6 +194,11 @@ def main(src_path, npz, bg_dir, model, out_path):
     motes, birds, petals_back, petals_front, glints, embers = (
         E.Motes(), E.Birds(), E.Petals(seed=9), E.Petals(n=18, seed=31), E.Glints(), E.Embers())
     ones = np.ones((H, W), np.float32)
+    # the camera follows her slowly (2 s smoothing), so it frames her without copying every small move
+    g = np.exp(-np.arange(-90, 91) ** 2 / (2 * 30.0 ** 2))
+    g /= g.sum()
+    fxs = np.convolve(np.pad(face.cx, 90, mode="edge"), g, mode="valid")
+    fys = np.convolve(np.pad(face.cy, 90, mode="edge"), g, mode="valid")
 
     lyr = [E.line_sprites(pt, ru, E.GOLD_WORDS.get(i, (None,))[0]) for i, (_, _, pt, ru) in enumerate(C.LYRICS)]
     ctx = C.text_block([
@@ -140,23 +231,40 @@ def main(src_path, npz, bg_dir, model, out_path):
             if E.EMBERS[0] <= t < E.EMBERS[1]:
                 embers.draw(np.zeros((E.SH, E.SW, 3), np.float32), t, 0, face.e(t))
             continue
-        room = cv2.resize(src, (W, H), interpolation=cv2.INTER_LANCZOS4)
-        alpha = cv2.resize(matte(src, int(t * 1000)), (W, H), interpolation=cv2.INTER_LINEAR)
         e, sm = face.e(t), face.s(t)
+        fx, fy = float(fxs[min(i, n - 1)]), float(fys[min(i, n - 1)])
+        Mh, Mb, (qx, qy) = camera(t, fx, fy, e)
+        Mh_src = Mh.copy()
+        Mh_src[:, :2] *= W / src.shape[1]   # her layer is warped once, straight from the 720p source
+        alpha_src = matte(src, int(t * 1000))
 
-        # ---- the world behind her: layered scenes with organic dissolves ----
-        bg = None
-        for k, (name, a, b, pan, zoom) in enumerate(SCENES):
-            if not (a <= t < b):
-                continue
-            layer = room if name == "room" else paintings[name].frame(t, a, b, pan, zoom)
+        # ---- the world behind her: each painting moves with the parallax camera; changes are dolly-zoom rushes ----
+        bg, rush = None, 0.0
+        active = [k for k, sc in enumerate(SCENES) if sc[1] <= t < sc[2]]
+        for k in active:
+            name, a, b, pan, zoom = SCENES[k]
             arrive = smooth((t - a) / XFADE[name])
+            nxt = next((smooth((t - SCENES[j][1]) / XFADE[SCENES[j][0]]) for j in active if j > k), 0.0)
+            if name == "room":
+                layer = cv2.warpAffine(src, Mh_src, (W, H), flags=cv2.INTER_LANCZOS4, borderMode=cv2.BORDER_REPLICATE)
+            else:
+                first = k == 1
+                s_in = 1 + (0.06 if first else 0.32) * (1 - arrive) ** 2   # the new world pulls back into place
+                s_out = 1 + 0.55 * nxt ** 2                                 # the old one rushes past the camera
+                M = around(Mb, s_in * s_out, qx, qy)
+                layer = cv2.warpAffine(paintings[name].frame(t, a, b, pan, zoom), M, (W, H),
+                                       flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
+                if not first and SCENES[k - 1][0] != "room":
+                    rush = max(rush, 4 * arrive * (1 - arrive))
             if bg is None or arrive >= 1:
                 bg = layer.astype(np.float32)
             else:
                 m = np.clip((arrive * 1.3 - noises[k] * 0.3), 0, 1)[..., None]
                 m = m * m * (3 - 2 * m)
                 bg = bg * (1 - m) + layer.astype(np.float32) * m
+        if rush > 0.02:
+            bg = bg + (zoom_blur(bg, qx, qy, rush) - bg) * min(rush * 1.2, 1.0)
+            bg = 255 - (255 - bg) * (1 - 0.22 * rush ** 2 * np.float32([0.55, 0.8, 1.0]))  # warm flash (BGR)
 
         # lyric images living inside the painting, behind her
         light = np.zeros((E.SH, E.SW, 3), np.float32)
@@ -175,37 +283,33 @@ def main(src_path, npz, bg_dir, model, out_path):
         if (a := E.env_at(*E.ROSES, t, 0.8, 1.6)) > 0:
             petals_back.draw(bg, t, a, ones, sm)
 
-        # ---- composite: her, untouched, over the world; soft light wrap only at her silhouette edge ----
+        # ---- her, untouched, over the world ----
+        # I + (1-a)(new - plate): where she is solid (a=1) the pixel is exactly hers; in the hair edge the room
+        # seen through the strands (estimated from nearby wall pixels, normalized convolution) is swapped out
+        rf = src.astype(np.float32)
+        sw, shh = src.shape[1] // 4, src.shape[0] // 4
+        wgt = cv2.resize((1 - alpha_src) ** 4, (sw, shh), interpolation=cv2.INTER_AREA)
+        num = cv2.GaussianBlur(cv2.resize(rf, (sw, shh), interpolation=cv2.INTER_AREA) * wgt[..., None], (0, 0), 4)
+        den = cv2.GaussianBlur(wgt, (0, 0), 4)[..., None] + 1e-4
+        plate = cv2.resize(num / den, (src.shape[1], src.shape[0]), interpolation=cv2.INTER_LINEAR)
+        fgp = rf - (1 - alpha_src[..., None]) * plate          # her, premultiplied
+        fg = cv2.warpAffine(fgp, Mh_src, (W, H), flags=cv2.INTER_LANCZOS4, borderMode=cv2.BORDER_REPLICATE)
+        alpha = np.clip(cv2.warpAffine(alpha_src, Mh_src, (W, H), flags=cv2.INTER_LINEAR,
+                                       borderMode=cv2.BORDER_REPLICATE), 0, 1)
         bgf = bg.astype(np.float32)
         al = alpha[..., None]
         edge = np.clip(alpha * (1 - alpha) * 4, 0, 1)
-        wrap = cv2.GaussianBlur(bgf, (0, 0), 14) * (edge[..., None] * 0.35)
-        # I + (1-a)(new - plate): where she is solid (a=1) the pixel is exactly hers; in the hair edge the old
-        # room seen through the strands is swapped for the painting instead of leaving dark fringes
-        # the room seen through the strands, estimated locally from nearby wall pixels (normalized convolution)
-        rf = room.astype(np.float32)
-        wgt = cv2.resize((1 - alpha) ** 4, (W // 4, H // 4), interpolation=cv2.INTER_AREA)
-        num = cv2.GaussianBlur(cv2.resize(rf, (W // 4, H // 4), interpolation=cv2.INTER_AREA) * wgt[..., None], (0, 0), 6)
-        den = cv2.GaussianBlur(wgt, (0, 0), 6)[..., None] + 1e-4
-        plate = cv2.resize(num / den, (W, H), interpolation=cv2.INTER_LINEAR)
-        img = rf + (1 - al) * (bgf - plate)
-        img = np.clip(img + wrap * (1 - al * 0.5), 0, 255)
+        wrap = cv2.GaussianBlur(bgf, (0, 0), 14) * (edge[..., None] * (0.35 + 0.1 * rush))  # the flash rims her
+        img = np.clip(fg + (1 - al) * bgf + wrap * (1 - al * 0.5), 0, 255)
 
-        # the turn: slow approach + edges into shadow
-        k_turn, z = 0.0, 1.0
-        if C.TURN[0] <= t < C.TURN[1]:
-            k_turn = smooth((t - C.TURN[0]) / 2.0)
-            z = 1.0 + 0.07 * smooth((t - C.TURN[0]) / (C.TURN[1] - C.TURN[0]))
-            cx, cy = W / 2, H * 0.33
-            M = np.float32([[z, 0, (1 - z) * cx], [0, z, (1 - z) * cy]])
-            img = cv2.warpAffine(img, M, (W, H), flags=cv2.INTER_LANCZOS4, borderMode=cv2.BORDER_REPLICATE)
+        k_turn = smooth((t - C.TURN[0]) / 2.0) if C.TURN[0] <= t < C.TURN[1] else 0.0
         cap_a = max((fade(t, a, b, fin=0.35, fout=0.4) for a, b, _, _ in C.LYRICS), default=0.0)
         shade = 0.55 * C.POOL * cap_a + 0.3 * C.BOTTOM + 0.35 * C.TOP * fade(t, C.CONTEXT[0] - 0.3, C.CONTEXT[1] + 0.3) \
             + 0.6 * C.VIGNETTE * k_turn
         img = img * (1 - np.clip(shade, 0, 0.85))[..., None]
 
         # in front of her, never on her face
-        mask = face.mask(i, z)
+        mask = face_mask(face, Mh, i)
         front = np.zeros((E.SH, E.SW, 3), np.float32)
         wind = max(E.env_at(a, b, t) for a, b in E.WIND)
         if wind > 0:
@@ -228,9 +332,10 @@ def main(src_path, npz, bg_dir, model, out_path):
             la = fade(t, a, b, fin=0.35, fout=0.4)
             if la <= 0:
                 continue
-            C.paste(img, base, C.CAPTION_Y, la)
+            cy = C.CAPTION_Y + 26 * (1 - ease((t - a) / 0.6))   # each line rises into place
+            C.paste(img, base, cy, la)
             if gold is not None:
-                C.paste(img, gold, C.CAPTION_Y, la * smooth((t - E.GOLD_WORDS[li][1] + 0.15) / 0.5))
+                C.paste(img, gold, cy, la * smooth((t - E.GOLD_WORDS[li][1] + 0.15) / 0.5))
         if t >= C.CARD:
             C.paste(img, card, 880, smooth((t - C.CARD) / 0.9))
 
