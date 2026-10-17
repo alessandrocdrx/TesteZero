@@ -336,6 +336,48 @@
       "arquivo": "analise_cena02.npz",
       "sha256": "d552392110fc3610078b5cb85f9d651e9a6454ea0a326d33e7fd064a65dbed7a",
       "criado": "2026-10-17 18:26:16"
+    },
+    "analise_cena03": {
+      "chave": "7dc3e0f746512d88",
+      "params": {
+        "clip_sha256": "9926e347cdab417e1ace2a3ecfa888116a11d54abce7ed83aedcb0fd0ea780ae",
+        "w": 540,
+        "h": 960,
+        "seg": "isnet-general-use",
+        "v": 2
+      },
+      "seed": null,
+      "arquivo": "analise_cena03.npz",
+      "sha256": "9a92a2f648a101cf44f34e3f030d2d7eaf5af6bd7eb871e4662158113f41a64d",
+      "criado": "2026-10-17 18:30:07"
+    },
+    "analise_cena04": {
+      "chave": "b6d1854f01e6e614",
+      "params": {
+        "clip_sha256": "3f26466129031cdc64e49414fbb4af972a96d240d48ffd6c497e8b512dcb2713",
+        "w": 540,
+        "h": 960,
+        "seg": "isnet-general-use",
+        "v": 2
+      },
+      "seed": null,
+      "arquivo": "analise_cena04.npz",
+      "sha256": "c60fb95015d61cb58ed961f67dfdd61ed79b39391024ef3af5c42013a7414c7d",
+      "criado": "2026-10-17 18:33:01"
+    },
+    "analise_cena01": {
+      "chave": "24abe3d94f5cfaa4",
+      "params": {
+        "clip_sha256": "c7d1851c76820769e0844ab165a29c1d84f1fb98ef5b4223c38bb78e3c66d122",
+        "w": 540,
+        "h": 960,
+        "seg": "isnet-general-use",
+        "v": 2
+      },
+      "seed": null,
+      "arquivo": "analise_cena01.npz",
+      "sha256": "b4fce8bd4ac8349b1293dbdf1891212996428cd81bdab7795ff2c0c10bbb022a",
+      "criado": "2026-10-17 18:36:06"
     }
   }
 }
