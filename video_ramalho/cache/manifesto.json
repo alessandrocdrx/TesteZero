@@ -370,9 +370,9 @@
       "criado": "2026-10-17 18:33:01"
     },
     "analise_cena01": {
-      "chave": "24abe3d94f5cfaa4",
+      "chave": "40780da7d5f55794",
       "params": {
-        "clip_sha256": "c7d1851c76820769e0844ab165a29c1d84f1fb98ef5b4223c38bb78e3c66d122",
+        "clip_sha256": "7df1d502ec5bbd5340b2b2164cde48fa48864cc7fb0b57c29c519d92ebc5d936",
         "w": 540,
         "h": 960,
         "seg": "isnet-general-use",
@@ -380,8 +380,8 @@
       },
       "seed": null,
       "arquivo": "analise_cena01.npz",
-      "sha256": "b4fce8bd4ac8349b1293dbdf1891212996428cd81bdab7795ff2c0c10bbb022a",
-      "criado": "2026-10-17 18:36:06"
+      "sha256": "15e92812a7deaa71e72a45a8ff108745ec081ae77a99460d6e36d72f90218c24",
+      "criado": "2026-10-17 19:16:30"
     },
     "profund_cena05": {
       "chave": "19373e931b4635f1",
