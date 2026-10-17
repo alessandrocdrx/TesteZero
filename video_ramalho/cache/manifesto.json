@@ -308,6 +308,20 @@
       "criado": "2026-10-17 18:16:41",
       "generation_id": "Tb9O7Rmhm9ly1qT5BM3o",
       "creditos": 3393
+    },
+    "analise_cena06": {
+      "chave": "2b9333667867c7ca",
+      "params": {
+        "clip_sha256": "aa6a007be3c7918ca8bb779d79953933da7879a24ce0572242e5b52ee6a309f8",
+        "w": 540,
+        "h": 960,
+        "seg": "isnet-general-use",
+        "v": 2
+      },
+      "seed": null,
+      "arquivo": "analise_cena06.npz",
+      "sha256": "39236290454188c6453f9be16ddca711c6d4546e2d63c13f669895cd8b1b38d4",
+      "criado": "2026-10-17 18:21:46"
     }
   }
 }
