@@ -458,7 +458,9 @@ def main(src_path, npz, bg_dir, model, out_path):
             birds.draw(bg, t, a, ones)
         if (a := E.env_at(*E.ROSES, t, 0.8, 1.6)) > 0:
             petals_back.draw(bg, t, a, ones, sm)
-        fb = fore.render(t, e, sm)
+        z = float(Mh[0, 0])
+        hx, hy = face.at(i)
+        fb = fore.render(t, e, sm, ((z * hx + Mh[0, 2]) / 2, (z * hy + Mh[1, 2]) / 2, face.r * z * 0.75 / 2))
         if fb.back[..., 3].any():   # 3D objects behind her live inside the painting
             bk = cv2.resize(fb.back, (W, H), interpolation=cv2.INTER_LINEAR)
             bg = np.clip(bg * (1 - bk[..., 3:]) + bk[..., :3], 0, 255).astype(np.uint8)

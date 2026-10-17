@@ -264,7 +264,7 @@ class Foreground:
     def __init__(self):
         self.leaves, self.flight, self.bokeh, self.forest, self.mist = Leaves(), Flight(), Bokeh(), Forest(), Mist()
 
-    def render(self, t, e, sm):
+    def render(self, t, e, sm, her=None):
         B = Buffers()
         wind = max(env(a, b, t) for a, b in E.WIND)
         if wind > 0:
@@ -282,6 +282,13 @@ class Foreground:
             self.mist.draw(B, t, a, e)
         for sw in SWARMS:
             sw.draw(B, t, e)
+        for h in HEROES:
+            if isinstance(h, Orbit):
+                h.draw(B, t, e, her)
+            elif isinstance(h, Flock):
+                h.draw(B, t, her)
+            else:
+                h.draw(B, t)
         return B
 
     @staticmethod
@@ -454,4 +461,209 @@ SWARMS = [
     Depth3D("orb", [E.NIGHTINGALES], 10, 46, [(110, 240, 210), (90, 230, 180)], 40, (8, -15), light=True),
     # her voice alone under the moon: silver specks drift up with the mist
     Depth3D("orb", [E.EMBERS], 22, 47, MOON, 22, (6, -30), light=True, near_share=0.6),
+]
+
+
+# ---------- hero 3D objects: each lyric keyword fires its own, peaking on the sung word ----------
+def kenv(t, w, pre=0.8, post=3.0):
+    """0 before w-pre, rises to exactly 1 on the word, then fades out over post seconds"""
+    if t < w - pre or t > w + post:
+        return 0.0
+    if t <= w:
+        return smooth((t - w + pre) / pre)
+    return 1 - smooth((t - w) / post)
+
+
+def bird3d(buf, x, y, s, yaw, flap, col, alpha, sigma, roll=0.0):
+    """a bird in perspective: curved wings that beat, foreshortened by its heading (yaw 0 = flying across,
+    pi/2 = straight at us), with the upper wing surfaces catching the light"""
+    pad = int(s * 1.3 + 3 * sigma + 4)
+    if not (-pad < x < SW + pad and -pad < y < SH + pad) or s < 2:
+        return
+    span = 0.35 + 0.65 * abs(math.cos(yaw))              # wings shorten as it turns toward the lens
+    up = flap * 0.45
+    u = np.linspace(0, 1, 9)
+    lead = np.stack([u, -up * u ** 1.6 - 0.12 * np.sin(np.pi * u)], 1)          # leading edge, root to tip
+    trail = np.stack([u[::-1], -up * u[::-1] ** 1.6 + 0.16 * (1 - u[::-1]) + 0.05], 1)
+    wing = np.vstack([lead, trail])
+    patch = np.zeros((2 * pad, 2 * pad, 4), np.float32)
+    col = np.float32(col)
+    c, sn = math.cos(roll), math.sin(roll)
+    for side in (1, -1):
+        P = wing.copy()
+        P[:, 0] *= side * span
+        P = P @ np.array([[c, sn], [-sn, c]])
+        poly = (P * s + pad).astype(np.int32)
+        m = np.zeros((2 * pad, 2 * pad), np.uint8)
+        cv2.fillPoly(m, [poly], 255, cv2.LINE_AA)
+        k = m.astype(np.float32)[..., None] / 255
+        lit = 0.75 + 0.5 * max(0.0, -flap) + 0.15 * side * math.sin(yaw)    # wings up show their lit underside
+        patch[..., :3] = patch[..., :3] * (1 - k) + np.clip(col * lit, 0, 255) * k
+        patch[..., 3:] = patch[..., 3:] * (1 - k) + k
+    m = np.zeros((2 * pad, 2 * pad), np.uint8)
+    cv2.ellipse(m, (pad, pad + int(0.06 * s)), (max(1, int(s * 0.2 * (0.5 + 0.5 * abs(math.sin(yaw))) + s * 0.06)),
+                max(1, int(s * 0.08))), math.degrees(roll), 0, 360, 255, -1, cv2.LINE_AA)
+    k = m.astype(np.float32)[..., None] / 255
+    patch[..., :3] = patch[..., :3] * (1 - k) + col * 0.8 * k
+    patch[..., 3:] = patch[..., 3:] * (1 - k) + k
+    patch[..., :3] *= patch[..., 3:]
+    _over(buf, cv2.GaussianBlur(patch, (0, 0), sigma) * alpha, int(x) - pad, int(y) - pad)
+
+
+class Orbit(Depth3D):
+    """Objects circling her in 3D around her chest: on the far side of the ring they are behind her (hidden by her
+    body, inside the painting), on the near side they pass in front of her. The face mask keeps them off her face."""
+
+    def __init__(self, kind, words, n, seed, colors, size, radius=1.35, height=(0.9, 2.1), spin=0.9, rise=0.0,
+                 light=False, pre=0.8, post=3.0, window=None):
+        super().__init__("bird" if kind == "bird" else kind, [], 0, seed, colors, size, (0, 0), light=light)
+        if kind == "bird":
+            self.shape = None
+        r = random.Random(seed)
+        self.words, self.radius, self.spin, self.rise, self.pre, self.post, self.window = (
+            words, radius, spin, rise, pre, post, window)
+        self.p = [dict(th=r.uniform(0, 6.3), h=r.uniform(*height), rr=r.uniform(0.85, 1.15), ph=r.uniform(0, 6.3),
+                       r=[r.uniform(0, 6.3) for _ in range(3)], w=[r.uniform(-2, 2) for _ in range(3)],
+                       col=r.choice(colors), s=r.uniform(0.75, 1.25), sp=r.uniform(0.8, 1.2)) for _ in range(n)]
+        if kind == "bird":                               # few birds: spread evenly so one is always in front
+            for j, p in enumerate(self.p):
+                p["th"], p["sp"] = j * 2 * math.pi / n, 1.0
+
+    def amount(self, t):
+        a = max((kenv(t, w, self.pre, self.post) for w in self.words), default=0.0)
+        if self.window:
+            a = max(a, 0.55 * env(*self.window, t, 2.0, 1.5))
+        return a
+
+    def draw(self, B, t, energy, her):
+        a = self.amount(t)
+        if a <= 0 or her is None:
+            return
+        cx, cy, fr = her
+        w = min(self.words, key=lambda w: abs(t - w)) if self.words else t
+        tau = t - w
+        for p in self.p:
+            # the ring winds up into the word: it spins faster and widens until the word lands
+            th = p["th"] + self.spin * p["sp"] * (t * 1.2 + 2.5 * math.tanh(tau * 1.5))
+            R = self.radius * p["rr"] * fr * (0.55 + 0.45 * a) * (1 + 0.15 * energy)
+            depth = math.sin(th)                         # > 0: far side of the ring, behind her
+            z = 1 + 0.5 * depth
+            k = 1 / z
+            x = cx + R * math.cos(th) * k
+            y = cy + (p["h"] - self.rise * tau) * fr + 0.18 * fr * depth + math.sin(t * 1.3 + p["ph"]) * 0.08 * fr
+            s = self.size * p["s"] * k * (0.6 + 0.4 * a)
+            sigma = 0.6 + abs(k - 1) * (5.0 if z < 1 else 1.2)
+            buf = B.back if z > 1 else B.deep
+            al = a * (0.95 if z < 1 else 0.85)
+            if self.light:
+                self._orb(B.light, x, y, s, sigma, p, al * (0.7 + 0.6 * energy), t)
+            elif self.kind == "bird":
+                # flying along the ring: across the frame at its sides, toward/away from us in front and behind
+                bird3d(buf, x, y, s, math.pi / 2 - th, math.sin(t * 13 + p["ph"]), p["col"], al, sigma,
+                       roll=0.25 * math.cos(th))
+            else:
+                rot = [p["r"][j] + p["w"][j] * t for j in range(3)]
+                self._sprite(buf, x, y, s, sigma, rot, p["col"], al)
+
+
+class Flock:
+    """'livres': a flock flies out of the painting behind her, passes her shoulders on the word and reaches the lens"""
+
+    def __init__(self, word, n=11, seed=51):
+        r = random.Random(seed)
+        self.word = word
+        self.b = [dict(dt=r.uniform(-0.35, 0.35), ox=r.choice((-1, 1)) * r.uniform(1.25, 2.2), oy=r.uniform(-1.4, 0.3),
+                       s=r.uniform(0.8, 1.2), ph=r.uniform(0, 6.3)) for _ in range(n)]
+
+    def draw(self, B, t, her):
+        if her is None or not (self.word - 1.8 < t < self.word + 2.0):
+            return
+        cx, cy, fr = her
+        for b in self.b:
+            tau = t - self.word - b["dt"]
+            z = math.exp(-1.15 * tau)                    # crosses her plane (z = 1) on the word
+            if not (0.22 < z < 5.0):
+                continue
+            k = 1 / z
+            x = cx + b["ox"] * fr * 0.62 * k
+            y = cy + b["oy"] * fr * 0.62 * k
+            s = 0.32 * fr * b["s"] * k
+            sigma = 0.6 + abs(k - 1) * (4.0 if z < 1 else 1.0)
+            fade_in = smooth((5.0 - z) / 1.5)
+            bird3d(B.back if z > 1 else B.deep, x, y, s, 1.1, math.sin(t * 11 + b["ph"]), (40, 36, 34),
+                   0.95 * fade_in, sigma, roll=0.2 * b["ox"])   # coming at us, banking outward
+
+
+def rose3d(buf, x, y, s, bloom, tilt, col, alpha, sigma, spin):
+    """a rose seen from above at an angle: rings of petals that open outward from a closed bud"""
+    pad = int(s * 1.25 + 3 * sigma + 4)
+    if not (-pad < x < SW + pad and -pad < y < SH + pad) or s < 2:
+        return
+    patch = np.zeros((2 * pad, 2 * pad, 4), np.float32)
+    col = np.float32(col)
+    rings = 5
+    for l in range(rings):                               # outer ring first, the bud last
+        q = 1 - l / rings
+        open_ = bloom * q
+        n = 5 + (l % 2)
+        for j in range(n):
+            ang = spin + j * 2 * math.pi / n + l * 0.6
+            dist = s * (0.15 + 0.55 * open_) * q
+            px, py = math.cos(ang) * dist, math.sin(ang) * dist * tilt
+            ax = s * (0.22 + 0.25 * q) * (0.6 + 0.4 * bloom)
+            ay = ax * (0.55 + 0.35 * open_) * tilt
+            m = np.zeros((2 * pad, 2 * pad), np.uint8)
+            cv2.ellipse(m, (int(pad + px), int(pad + py)), (max(1, int(ax)), max(1, int(ay))),
+                        math.degrees(ang) + 90 * (1 - open_), 0, 360, 255, -1, cv2.LINE_AA)
+            k = m.astype(np.float32)[..., None] / 255
+            shade = 0.55 + 0.45 * (l / rings) + 0.15 * math.sin(ang - 0.8)   # deeper inside, lit from top left
+            patch[..., :3] = patch[..., :3] * (1 - k) + np.clip(col * shade, 0, 255) * k
+            patch[..., 3:] = patch[..., 3:] * (1 - k) + k
+            e = np.zeros_like(m)                         # the petal's curled rim, darker: reads as layered
+            cv2.ellipse(e, (int(pad + px), int(pad + py)), (max(1, int(ax)), max(1, int(ay))),
+                        math.degrees(ang) + 90 * (1 - open_), 200, 340, 255, max(1, int(s / 40)), cv2.LINE_AA)
+            k = e.astype(np.float32)[..., None] / 255
+            patch[..., :3] = patch[..., :3] * (1 - k) + np.clip(col * shade * 0.55, 0, 255) * k
+    patch[..., :3] *= patch[..., 3:]
+    _over(buf, cv2.GaussianBlur(patch, (0, 0), sigma) * alpha, int(x) - pad, int(y) - pad)
+
+
+class Roses:
+    """'as rosas se abrem': roses bloom in 3D on the word, near the lens in the top corners and behind her shoulders"""
+
+    def __init__(self, word):
+        self.word = word
+        self.r = [  # (x, y in frame fractions, size, depth z, colour)
+            (0.02, 0.30, 120, 0.8, PINK[3]), (0.99, 0.36, 110, 0.85, PINK[0]),
+            (0.12, 0.62, 95, 1.25, PINK[1]), (0.89, 0.58, 90, 1.3, PINK[2]), (0.5, 0.2, 70, 1.6, PINK[0]),
+        ]
+
+    def draw(self, B, t):
+        tau = t - self.word
+        if tau < -0.7 or tau > 6.5:
+            return
+        bloom = smooth((tau + 0.6) / 1.4)                # half open on the word, full a second later
+        out = 1 - smooth((tau - 4.5) / 2.0)
+        for j, (fx, fy, s, z, col) in enumerate(self.r):
+            k = 1 / z
+            sigma = 0.5 + abs(k - 1) * (2.0 if z < 1 else 0.8)
+            rose3d(B.deep if z < 1 else B.back, SW * fx, SH * fy + 6 * math.sin(t + j), s * k * 0.55,
+                   bloom, 0.68, col, smooth((tau + 0.7) / 0.5) * out, sigma, 0.4 * t + j)
+
+
+HEROES = [
+    # "ветра" (vento): a whirlwind of leaves winds up around her and rises with the gust
+    Orbit("leaf", E.GUSTS, 34, 61, LEAF, 30, radius=1.45, rise=0.25, spin=1.1),
+    # "свободно" (livres): a flock flies from behind her to the camera
+    Flock(E.FLOCK_LIFT),
+    # "солнце" (sol) and "светом" (luz): a ring of sunlight circles her
+    Orbit("orb", [E.SUN_BLOOM, 44.8], 30, 62, SUNLIGHT, 44, radius=1.4, height=(0.6, 1.9), light=True, spin=0.7),
+    # "розы" (rosas): roses bloom and a vortex of petals circles her
+    Roses(E.ROSE_BURST),
+    Orbit("petal", [E.ROSE_BURST], 36, 63, PINK, 26, radius=1.4, rise=-0.15, spin=1.0, post=3.5),
+    # "соловьи" (rouxinóis): two nightingales fly circles around her
+    Orbit("bird", [56.3], 3, 64, [(60, 85, 110), (50, 75, 100)], 60, radius=1.5, height=(1.0, 1.6), spin=1.5,
+          post=5.0),
+    # her voice alone, under the moon: a silver spiral that grows with her voice
+    Orbit("orb", [], 40, 65, MOON, 26, radius=1.5, height=(0.2, 2.4), light=True, spin=0.5, window=E.EMBERS),
 ]
