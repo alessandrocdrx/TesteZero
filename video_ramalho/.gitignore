@@ -4,3 +4,5 @@ _render/
 __pycache__/
 cache/manifesto.json.lock
 cache/modelos/
+# vídeo final: só entra no git (git add -f) depois de passar nos 8 testes
+Ramalho_Fogoes.mp4
