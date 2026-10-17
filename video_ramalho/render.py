@@ -321,6 +321,8 @@ def render_quadro(t, final, cache_fr, diag=False):
     if j != i and fr > 0.01:
         img = img * (1 - fr) + quadro_clipe(nome, j, W, H, cache_fr) * fr
         m = m * (1 - fr) + m1 * fr; placa = placa * (1 - fr) + placa1 * fr
+    if CENARIO_FIXO:  # fundo e personagem andam juntos: o próprio quadro serve de fundo (o preenchido piscava)
+        placa = img.copy()
     if op.get("sem_rosto") or op.get("camada_unica"):
         # quadro inteiro numa camada só: o recorte pegava a chama (cena 1) / o fogão sob a mão (cena 4) e o
         # preenchimento atrás virava borrões cinza; a profundidade continua dando o 3D, pivô no personagem
