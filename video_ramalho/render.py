@@ -199,6 +199,18 @@ def tamanho(final):
     return (1080, 1920) if final else (540, 960)
 
 
+def so_pessoa(m):
+    """Recorte só da pessoa: maior região conectada (+ pedaços grandes, ex. braço solto). Manchas soltas, como o
+    brilho das chamas que o rembg às vezes pega, andariam separadas do fundo na câmera 3D."""
+    n, lab, st, _ = cv2.connectedComponentsWithStats((m > 0.5).astype(np.uint8), connectivity=8)
+    if n <= 2:
+        return m
+    areas = st[1:, cv2.CC_STAT_AREA]
+    manter = np.isin(lab, 1 + np.nonzero(areas >= 0.4 * areas.max())[0]).astype(np.uint8)
+    manter = cv2.GaussianBlur(cv2.dilate(manter, np.ones((7, 7), np.uint8)).astype(np.float32), (0, 0), 2)
+    return m * np.clip(manter, 0, 1)
+
+
 def carregar(cena, i, W, H):
     i = max(0, i)
     fr = os.path.join(DIR, "recorte", cena, f"{i:05d}.png")
@@ -206,6 +218,7 @@ def carregar(cena, i, W, H):
     i = min(i, n - 1)
     m = np.asarray(Image.open(os.path.join(DIR, "recorte", cena, f"{i:05d}.png")), np.float32) / 255
     p = np.asarray(Image.open(os.path.join(DIR, "placa", cena, f"{i:05d}.jpg")).convert("RGB"), np.float32) / 255
+    m = so_pessoa(m)
     if (W, H) != (AW, AH):
         m = cv2.resize(m, (W, H), interpolation=cv2.INTER_LINEAR); p = cv2.resize(p, (W, H), interpolation=cv2.INTER_CUBIC)
     return i, m, p
@@ -345,7 +358,7 @@ def render_quadro(t, final, cache_fr, diag=False):
     nevoa = (0.10 * np.clip((yy - 0.45) / 0.55, 0, 1)) * np.array([0.75, 0.85, 1.0], np.float32)
     fundo = 1 - (1 - fundo) * (1 - nevoa)
     if op.get("fim"):  # tela final: a cena vira fundo desfocado e escurecido; os objetos ficam livres
-        u = min(1.0, (t - ta) / 0.4)
+        u = ease(min(1.0, (t - ta) / 0.4))  # suave nas duas pontas (parar de escurecer de repente dava tranco de brilho)
         cena = frente * mask[..., None] + fundo * (1 - mask[..., None])
         fundo = cena * (1 - u) + cv2.GaussianBlur(cena, (0, 0), 1 + 6 * u * f) * u * (1 - 0.5 * u)  # ele continua reconhecível
         mask = mask * 0

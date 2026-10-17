@@ -92,6 +92,8 @@ orig = np.frombuffer(subprocess.run(["ffmpeg", "-v", "error", "-i", os.path.join
                                      "-ac", "1", "-ar", "48000", "-"], capture_output=True, check=True).stdout, np.float32)
 off = int((a.de - R.LEAD) * 48000)
 seg = orig[max(0, off):max(0, off) + len(pcm)]
+if off < 0:  # a narração entra LEAD s depois do início do vídeo: o original começa com silêncio
+    seg = np.r_[np.zeros(-off, np.float32), orig][:len(pcm)]
 env = lambda x: np.array([np.sqrt(np.mean(x[i:i + 480] ** 2)) for i in range(0, len(x) - 480, 480)])
 e1, e2 = env(pcm), env(seg)
 n = min(len(e1), len(e2)); lags = range(-10, 11)
