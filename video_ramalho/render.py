@@ -285,7 +285,8 @@ def render_quadro(t, final, cache_fr, diag=False):
     fx0, fy0 = proj(*info["rosto"][:2]); fx1, fy1 = proj(*info["rosto"][2:])
     zona_rosto = np.ones((H, W), np.float32)
     pad = 0.25 * (fx1 - fx0) / 2
-    zona_rosto[max(0, int(fy0 - pad)):int(fy1 + pad), max(0, int(fx0 - pad)):int(fx1 + pad)] = 0
+    if info["rosto"].any():  # cenas sem rosto: caixa zerada viraria fatia negativa (tela quase toda)
+        zona_rosto[max(0, int(fy0 - pad)):max(0, int(fy1 + pad)), max(0, int(fx0 - pad)):max(0, int(fx1 + pad))] = 0
     zona_rosto = cv2.GaussianBlur(zona_rosto, (0, 0), 6 * f)
     # névoa atrás do personagem (só no fundo), leve e azulada embaixo
     yy = np.linspace(0, 1, H, dtype=np.float32)[:, None, None]
@@ -371,8 +372,8 @@ def gerar_ass(path, W, H):
             d = max(0.08, w["e"] - w["s"])
             parts.append(f"{{\\kf{int(d * 100)}}}{w['t']} "); tt = w["s"] + d
         txt = "".join(parts).strip()
-        if p[0]["t"] == "(41)":  # número do WhatsApp sem espaços entre os blocos
-            txt = txt.replace("(41) ", "(41) ").replace("8485- ", "8485-")
+        if p[0]["t"] == "(41)":  # o número já aparece grande na tela final; não repete na legenda
+            continue
         L.append(f"Dialogue: 1,{ts(st)},{ts(en)},Leg,,0,0,0,,{{\\fad(80,120)\\fscx90\\fscy90\\t(0,140,\\fscx100\\fscy100)}}{txt}")
     pop = "{\\fad(120,300)\\fscx60\\fscy60\\t(0,200,\\fscx112\\fscy112)\\t(200,380,\\fscx100\\fscy100)}"
     L.append(f"Dialogue: 2,{ts(T_AZUL - 0.05)},{ts(T_AZUL + 1.6)},Big,,0,0,0,,{{\\pos({W//2},{int(H*0.665)})}}{pop}CHAMA AZUL")
