@@ -139,6 +139,79 @@
       "criado": "2026-10-17 17:38:25",
       "generation_id": "ZD340vhyBEnVNKXrZK3A",
       "creditos": 2436
+    },
+    "palavras_take1": {
+      "chave": "3e6334ef03769ca5",
+      "params": {
+        "audio_sha256": "311839921d7871d692673a82937c37a98345bd21d9bba48534f0e22574181108",
+        "modelo": "whisper-medium",
+        "lingua": "pt"
+      },
+      "seed": null,
+      "arquivo": "narracao/take1.json",
+      "sha256": "d1a5d807873dbee6cfeb2f5249967f1a07082915bff95067d2c3a1742ec477d4",
+      "criado": "2026-10-17 17:44:19"
+    },
+    "palavras_take2": {
+      "chave": "707e6f0dd9248138",
+      "params": {
+        "audio_sha256": "2047657e5073779603e5aa1e59eb95149b50bdfdfebfed2b49d85e01a6b7eeab",
+        "modelo": "whisper-medium",
+        "lingua": "pt"
+      },
+      "seed": null,
+      "arquivo": "narracao/take2.json",
+      "sha256": "87d70d67433aad7750710e47240e30c75167a762b2fa9eee63fe1a47c723d3c5",
+      "criado": "2026-10-17 17:44:33"
+    },
+    "palavras_take3": {
+      "chave": "0d7c41ebe824255c",
+      "params": {
+        "audio_sha256": "618d198f090ac08565e2c804e787d1a8074293f018ebe935fe56a17bb4977850",
+        "modelo": "whisper-medium",
+        "lingua": "pt"
+      },
+      "seed": null,
+      "arquivo": "narracao/take3.json",
+      "sha256": "3c42dd54fa5375b41c7008c407885df3df62660fe1ed699266299415f48aad98",
+      "criado": "2026-10-17 17:44:47"
+    },
+    "palavras_take4": {
+      "chave": "8477fc53b98235a0",
+      "params": {
+        "audio_sha256": "887822883747b69badc6bff609b5c2dc600f54c73487abcbfdcc9bc986ce916c",
+        "modelo": "whisper-medium",
+        "lingua": "pt"
+      },
+      "seed": null,
+      "arquivo": "narracao/take4.json",
+      "sha256": "fae7b0980302a29196d4bf564529cb076c29e8059ebb14c11906d08224ae8b37",
+      "criado": "2026-10-17 17:45:02"
+    },
+    "analise_voz": {
+      "chave": "c415e817986d7a30",
+      "params": {
+        "audio_sha256": "311839921d7871d692673a82937c37a98345bd21d9bba48534f0e22574181108",
+        "fps": 30
+      },
+      "seed": null,
+      "arquivo": "analise_voz.npz",
+      "sha256": "d5e0977cd17fef87554b431a468d8d5418ad196ddfa663f793e064e4e259ffe7",
+      "criado": "2026-10-17 17:47:08"
+    },
+    "analise_cena05": {
+      "chave": "43cbff524c81bbb2",
+      "params": {
+        "clip_sha256": "4467bac48df61b9fad56332de1a28cccc61f99d6c57aa2938344c0bae228e2a5",
+        "w": 540,
+        "h": 960,
+        "seg": "isnet-general-use",
+        "v": 2
+      },
+      "seed": null,
+      "arquivo": "analise_cena05.npz",
+      "sha256": "bcd1ca61221a1c962cc179152338d85a74a3ef8f5705f67fe2b6d147b9e45c7c",
+      "criado": "2026-10-17 17:51:14"
     }
   }
 }
