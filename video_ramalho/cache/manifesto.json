@@ -67,6 +67,78 @@
       "criado": "2026-10-17 17:17:19",
       "generation_id": "SM7aI0ktvKCF7LoxF6Ka",
       "creditos": 1218
+    },
+    "caricatura_opcao1": {
+      "chave": "74480b0b2f1510c3",
+      "params": {
+        "modelo": "gemini-3-pro-image",
+        "estilo": "caricatura 3D",
+        "refs": [
+          "mM3f2OT64wiFLeWHfbgn",
+          "BuOMubEzuyNJW6QqFrVE"
+        ],
+        "variacao": 1
+      },
+      "seed": null,
+      "arquivo": "referencia/caricatura1.png",
+      "sha256": "933b1c19add0a0b0faad87b49b5ca2ab7a7e8b016e335a73f90b92e9b42c547f",
+      "criado": "2026-10-17 17:38:25",
+      "generation_id": "ldF5oQPu5OoRPyS9SqeV",
+      "creditos": 2436
+    },
+    "caricatura_opcao2": {
+      "chave": "a79d2d06d94c0824",
+      "params": {
+        "modelo": "gemini-3-pro-image",
+        "estilo": "caricatura 3D",
+        "refs": [
+          "mM3f2OT64wiFLeWHfbgn",
+          "BuOMubEzuyNJW6QqFrVE"
+        ],
+        "variacao": 2
+      },
+      "seed": null,
+      "arquivo": "referencia/caricatura2.png",
+      "sha256": "5af319b48edb13731453da9f236f8e0b9359a212e7ff9b0cc9bba38ef91fb872",
+      "criado": "2026-10-17 17:38:25",
+      "generation_id": "r3kA9vrQIjlZWcyPbQR3",
+      "creditos": 2436
+    },
+    "caricatura_opcao3": {
+      "chave": "468efab494fdb83e",
+      "params": {
+        "modelo": "gemini-3-pro-image",
+        "estilo": "caricatura 3D",
+        "refs": [
+          "mM3f2OT64wiFLeWHfbgn",
+          "BuOMubEzuyNJW6QqFrVE"
+        ],
+        "variacao": 3
+      },
+      "seed": null,
+      "arquivo": "referencia/caricatura3.png",
+      "sha256": "cf5f7190dc4227f51464d733fb8247b1ff5e270dd16d51415bffc843ff536f07",
+      "criado": "2026-10-17 17:38:25",
+      "generation_id": "K99rWCFa6gRgpnpmzhpZ",
+      "creditos": 2436
+    },
+    "caricatura_opcao4": {
+      "chave": "805fbee0fcbfe1f2",
+      "params": {
+        "modelo": "gemini-3-pro-image",
+        "estilo": "caricatura 3D",
+        "refs": [
+          "mM3f2OT64wiFLeWHfbgn",
+          "BuOMubEzuyNJW6QqFrVE"
+        ],
+        "variacao": 4
+      },
+      "seed": null,
+      "arquivo": "referencia/caricatura4.png",
+      "sha256": "3a52e9a9e985d3f4655442651bb8dfdda87f10c45608196ed1a56b7450cc39fb",
+      "criado": "2026-10-17 17:38:25",
+      "generation_id": "ZD340vhyBEnVNKXrZK3A",
+      "creditos": 2436
     }
   }
 }
