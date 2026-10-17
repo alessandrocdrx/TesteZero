@@ -6,6 +6,27 @@
 - Uma única virada no clímax: a legenda some, as bordas escurecem e a câmera se aproxima no máximo 7%.
 - Créditos no final.
 
+## Versão "mundo" (`mundo.py`): a mais ousada
+
+O vídeo começa no quarto real dela. Na primeira palavra, o quarto se dissolve numa pintura, e a cada verso
+ela canta dentro de um novo quadro russo do século XIX (gerados por IA no estilo de Kuindzhi, Levitan e
+Shishkin, em `cenarios/`). No sorriso final, o sonho acaba e ela volta para o quarto.
+
+| Verso | Cenário | Movimento e efeitos |
+|---|---|---|
+| "Voa nas asas do vento" | Estepe sob céu de vento | panorâmica da esquerda para a direita, poeira de luz |
+| "onde te cantávamos livres" | Nascer do sol sobre o rio | pássaros voando **atrás** dela |
+| "o sol brilha… banhando de luz" | Cáucaso dourado | raios de sol na pintura |
+| "as rosas se abrem" | Vale de rosas | pétalas atrás e na frente dela |
+| "rouxinóis cantam" | Floresta de Shishkin | brilhos entre as árvores |
+| Só a voz (clímax) | Noite de luar no rio | a lua ao lado dela, partículas que respiram com a voz |
+| Refrão final → sorriso | Estepe → quarto real | o sonho termina |
+
+Técnica: ela é recortada quadro a quadro com o MediaPipe (segmentação multiclasse + máscara fixa do
+microfone), a borda é refinada com filtro guiado, e os fios de cabelo são descontaminados. O fundo do
+quarto visto através deles é estimado localmente e trocado pela pintura. Onde ela é sólida, o pixel
+continua exatamente o original.
+
 ## Versão com efeitos ligados à letra (`efeitos.py`)
 
 `analisar.py` lê o vídeo e o áudio e gera, quadro a quadro, três dados: onde está o rosto dela, quando ela

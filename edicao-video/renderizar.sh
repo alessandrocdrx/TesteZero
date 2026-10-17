@@ -31,3 +31,8 @@ python3 analisar.py entrada/v.mp4 entrada/a.wav entrada/analise.npz
 python3 efeitos.py entrada/v.mp4 entrada/analise.npz saida/efeitos_sem_audio.mp4
 ffmpeg -loglevel error -y -i saida/efeitos_sem_audio.mp4 -i entrada/v.mp4 -map 0:v -map 1:a -c copy -movflags +faststart saida/voa_nas_asas_efeitos.mp4
 echo "Pronto: saida/voa_nas_asas_efeitos.mp4"
+
+# Versão "mundo": o quarto dela vira pinturas russas do século XIX que seguem a letra
+python3 mundo.py entrada/v.mp4 entrada/analise.npz cenarios modelos/selfie_multiclass.tflite saida/mundo_sem_audio.mp4
+ffmpeg -loglevel error -y -i saida/mundo_sem_audio.mp4 -i entrada/v.mp4 -map 0:v -map 1:a -c copy -movflags +faststart saida/voa_nas_asas_mundo.mp4
+echo "Pronto: saida/voa_nas_asas_mundo.mp4"
