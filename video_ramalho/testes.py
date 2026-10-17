@@ -155,7 +155,7 @@ res["6_legendas"] = {"quadros_fora_safe_zone": fora, "quadros_sobre_rosto": sobr
 piores["6_legendas"] = pior6
 
 # ---------- 7. Flicker: luminância média sem saltos entre quadros (exceto cortes de cena) ----------
-Y = V.astype(np.float32).mean((1, 2, 3))
+Y = np.array([float(v.mean()) for v in V])  # quadro a quadro (o vídeo inteiro em float32 não cabe na memória)
 d2 = np.abs(Y[2:] - 2 * Y[1:-1] + Y[:-2])
 cortes = {int(round((c[1] - a.de) * R.FPS)) for c in R.CENAS}
 d2m = np.array([0 if any(abs(i + 1 - c) <= 1 for c in cortes) else v for i, v in enumerate(d2)])
