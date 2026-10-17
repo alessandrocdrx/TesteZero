@@ -293,10 +293,9 @@ def clean_alpha(src, alpha, room, guard=None):
     core = cv2.erode((alpha > 0.97).astype(np.uint8), np.ones((27, 27), np.uint8)).astype(np.float32)
     rim = 1 - cv2.GaussianBlur(core, (0, 0), 5)
     trust = room["reliable"] * rim                                # where the plate is good and she may not be
-    # the chair under warm light is too close to her shadowed hair for a colour test: inside its outline the
-    # chair's own signature (near-black, neutral) counts as room as well
-    room_like = np.maximum(1 - diff_key, room["chair_soft"] * chair_colour(src))
-    wrong = np.maximum(trust * (1 - diff_key), room["chair_soft"] * room_like * rim)
+    # inside the chair's outline only the plain difference key applies: a colour test for the chair also ate
+    # her shadowed hair there, and intact hair matters more than a dark trace of the chair
+    wrong = trust * (1 - diff_key) * (1 - room["chair_soft"])
     if guard is not None:
         wrong = wrong * (1 - guard)
     out = (alpha * (1 - wrong)).astype(np.float32)
