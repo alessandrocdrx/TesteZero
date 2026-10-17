@@ -24,9 +24,9 @@ class Buffers:
         self.light = np.zeros((SH, SW, 3), np.float32)
         self.near = np.zeros((SH, SW, 4), np.float32)   # premultiplied BGR + alpha
         self.mid = np.zeros((SH, SW, 4), np.float32)
+        self.deep = np.zeros((SH, SW, 4), np.float32)   # near 3D objects, already defocused per sprite
+        self.back = np.zeros((SH, SW, 4), np.float32)   # 3D objects behind her, composited into the painting
 
-    def busy(self):
-        return self.light.any() or self.near[..., 3].any() or self.mid[..., 3].any()
 
 
 def blob(buf, x, y, ax, ay, ang, col, a):
@@ -57,6 +57,16 @@ class Leaves:
                           v=r.uniform(380, 560), ph=r.uniform(0, 6.3), col=r.choice(LEAF))
                      for g in E.GUSTS for _ in range(5)]
         self.travel, self.last = 0.0, None
+
+    def draw_near(self, B, t, amount, energy, gust):
+        """only the big gust leaves now; the rest of the wind is the 3D swarm"""
+        for p in self.near:
+            dt = t - p["t0"]
+            x = -80 + p["v"] * dt
+            if dt < 0 or x > SW + 80:
+                continue
+            y = p["y"] - 60 * dt + math.sin(dt * 3 + p["ph"]) * 25
+            blob(B.near, x, y, p["s"], p["s"] * 0.45, math.degrees(dt * 5 + p["ph"]), p["col"], amount)
 
     def draw(self, B, t, amount, energy, gust):
         if self.last is not None:
@@ -259,7 +269,7 @@ class Foreground:
         wind = max(env(a, b, t) for a, b in E.WIND)
         if wind > 0:
             gust = max(math.exp(-((t - g) / 0.8) ** 2) for g in E.GUSTS)
-            self.leaves.draw(B, t, wind, e, gust)
+            self.leaves.draw_near(B, t, wind, e, gust)
         if (a := env(*E.BIRDS, t)) > 0:
             self.flight.draw(B, t, a)
         if (a := env(*E.SUN, t, 1.5, 1.5)) > 0:
@@ -270,6 +280,8 @@ class Foreground:
             self.forest.draw(B, t, a, e)
         if (a := env(*E.EMBERS, t, 2.0, 1.2)) > 0:
             self.mist.draw(B, t, a, e)
+        for sw in SWARMS:
+            sw.draw(B, t, e)
         return B
 
     @staticmethod
@@ -282,7 +294,164 @@ class Foreground:
             b = cv2.resize(cv2.GaussianBlur(buf, (0, 0), sigma), (W, H), interpolation=cv2.INTER_LINEAR)
             a = b[..., 3:] * m
             img = img * (1 - a) + b[..., :3] * m
+        if B.deep[..., 3].any():
+            b = cv2.resize(B.deep, (W, H), interpolation=cv2.INTER_LINEAR)
+            img = img * (1 - b[..., 3:] * m) + b[..., :3] * m
         if B.light.any():
             L = cv2.resize(cv2.GaussianBlur(B.light, (0, 0), 1.5), (W, H), interpolation=cv2.INTER_LINEAR) * m
             img = 255 - (255 - img) * (255 - np.clip(L, 0, 255)) / 255
         return img
+
+
+# ---------- 3D depth particles: tumbling, shaded, defocused by distance; some behind her, some in front ----------
+def _outline(kind, n=28):
+    u = np.linspace(0, 2 * np.pi, n, endpoint=False)
+    if kind == "leaf":
+        x, y = np.cos(u), 0.42 * np.sin(u) * (1 - 0.35 * np.cos(u))
+    elif kind == "petal":
+        x, y = 0.8 * np.cos(u), 0.62 * np.sin(u) * (0.72 + 0.28 * np.cos(u))
+    else:  # feather
+        x, y = np.cos(u), 0.2 * np.sin(u) * (1 + 0.5 * np.cos(u))
+    return np.stack([x, y, np.zeros_like(x)], 1)
+
+
+def _rot(rx, ry, rz):
+    cx, sx, cy, sy, cz, sz = math.cos(rx), math.sin(rx), math.cos(ry), math.sin(ry), math.cos(rz), math.sin(rz)
+    Rx = np.array([[1, 0, 0], [0, cx, -sx], [0, sx, cx]])
+    Ry = np.array([[cy, 0, sy], [0, 1, 0], [-sy, 0, cy]])
+    Rz = np.array([[cz, -sz, 0], [sz, cz, 0], [0, 0, 1]])
+    return Rz @ Ry @ Rx
+
+
+def _over(buf, patch, x0, y0):
+    h, w = patch.shape[:2]
+    xa, ya, xb, yb = max(x0, 0), max(y0, 0), min(x0 + w, SW), min(y0 + h, SH)
+    if xa >= xb or ya >= yb:
+        return
+    p = patch[ya - y0:yb - y0, xa - x0:xb - x0]
+    roi = buf[ya:yb, xa:xb]
+    if buf.shape[2] == 4:
+        roi[:] = roi * (1 - p[..., 3:]) + p
+    else:
+        roi += p
+
+
+class Depth3D:
+    """A swarm of 3D objects for one lyric image. z < 1 is between the lens and her (bigger, faster, defocused),
+    z > 1 is behind her in the painting (smaller, slower, softly defocused)."""
+
+    def __init__(self, kind, windows, n, seed, colors, size, vel, sway=30, spin=1.0, near_share=0.5,
+                 bursts=(), light=False):
+        r = random.Random(seed)
+        self.kind, self.windows, self.colors, self.light = kind, windows, colors, light
+        self.size, self.vel, self.sway, self.bursts = size, vel, sway, bursts
+        self.shape = None if light else _outline(kind)
+        self.p = []
+        for k in range(n):
+            near = k < n * near_share
+            self.p.append(dict(x=r.uniform(0, SW), y=r.uniform(0, SH),
+                               z=r.uniform(0.38, 0.8) if near else r.uniform(1.3, 2.8),
+                               r=[r.uniform(0, 6.3) for _ in range(3)],
+                               w=[r.uniform(-1.6, 1.6) * spin for _ in range(3)], ph=r.uniform(0, 6.3),
+                               col=r.choice(colors), s=r.uniform(0.75, 1.25)))
+        self.travel, self.last = 0.0, None
+
+    def amount(self, t):
+        return max(env(a, b, t, 1.0, 1.2) for a, b in self.windows)
+
+    def draw(self, B, t, energy):
+        a = self.amount(t)
+        dt = 0.0 if self.last is None else max(0.0, min(t - self.last, 0.2))
+        self.last = t
+        if a <= 0:
+            return
+        boost = 1 + sum(2.5 * math.exp(-((t - b) / 0.7) ** 2) for b in self.bursts)
+        self.travel += dt * boost * (0.8 + 0.6 * energy)
+        m = 160
+        for p in self.p:
+            z = p["z"]
+            k = 1 / z                                   # parallax: nearer moves and looks bigger
+            x = (p["x"] + self.vel[0] * self.travel * k + math.sin(t * 0.8 + p["ph"]) * self.sway * k) % (SW + 2 * m) - m
+            y = (p["y"] + self.vel[1] * self.travel * k + math.cos(t * 0.6 + p["ph"]) * self.sway * 0.5 * k) % (SH + 2 * m) - m
+            s = self.size * p["s"] * k
+            sigma = 0.6 + abs(k - 1) * (5.5 if z < 1 else 1.4)   # depth of field: focus is on her
+            alpha = a * (0.95 if z < 1 else 0.8)
+            if self.light:
+                self._orb(B.light, x, y, s, sigma, p, alpha * (0.6 + 0.6 * energy) * boost ** 0.5, t)
+            else:
+                rot = [p["r"][j] + p["w"][j] * (t + self.travel) for j in range(3)]
+                self._sprite(B.deep if z < 1 else B.back, x, y, s, sigma, rot, p["col"], alpha)
+
+    def _sprite(self, buf, x, y, s, sigma, rot, col, alpha):
+        R = _rot(*rot)
+        pad = int(s * 1.2 + 3 * sigma + 4)
+        if not (-pad < x < SW + pad and -pad < y < SH + pad):
+            return
+        patch = np.zeros((2 * pad, 2 * pad, 4), np.float32)
+        n = R @ np.array([0, 0, 1.0])
+        col = np.float32(col)
+        # two halves folded along the midrib, each with its own normal: reads as a curved 3D surface
+        pts = (self.shape * s) @ R.T
+        for half, fold in ((pts[:, 1] >= 0, 0.35), (pts[:, 1] <= 0, -0.35)):
+            hp = self.shape.copy()
+            hp[:, 1] = np.where(self.shape[:, 1] * (1 if fold > 0 else -1) >= 0, self.shape[:, 1], 0)
+            P = (hp * s) @ R.T
+            nn = R @ np.array([0, math.sin(fold), math.cos(fold)])
+            light = 0.45 + 0.55 * max(0.0, nn[2] * 0.8 + nn[1] * -0.3 + 0.2)   # key light from above, front
+            if n[2] < 0:
+                light *= 0.7                                                     # the paler underside
+            poly = (P[:, :2] + pad).astype(np.int32)
+            m = np.zeros((2 * pad, 2 * pad), np.uint8)
+            cv2.fillPoly(m, [poly], 255, cv2.LINE_AA)
+            k = m.astype(np.float32)[..., None] / 255
+            c = np.clip(col * light, 0, 255)
+            patch[..., :3] = patch[..., :3] * (1 - k) + c * k
+            patch[..., 3:] = patch[..., 3:] * (1 - k) + k
+        if self.kind in ("leaf", "feather"):          # midrib / shaft catches the light
+            a0, a1 = (np.array([-1.0, 0, 0]) * s) @ R.T, (np.array([1.0, 0, 0]) * s) @ R.T
+            shade = (235, 240, 245) if self.kind == "feather" else tuple(float(v) * 0.6 for v in col)
+            mm = np.zeros((2 * pad, 2 * pad), np.uint8)
+            cv2.line(mm, tuple((a0[:2] + pad).astype(int)), tuple((a1[:2] + pad).astype(int)), 255,
+                     max(1, int(s / 14)), cv2.LINE_AA)
+            k = mm.astype(np.float32)[..., None] / 255 * patch[..., 3:]
+            patch[..., :3] = patch[..., :3] * (1 - k) + np.float32(shade) * k * patch[..., 3:]
+        patch[..., :3] *= patch[..., 3:]              # premultiply
+        patch = cv2.GaussianBlur(patch, (0, 0), sigma) * alpha
+        _over(buf, patch, int(x) - pad, int(y) - pad)
+
+    def _orb(self, buf, x, y, s, sigma, p, a, t):
+        """a bokeh disc: flat body, brighter rim, like an out-of-focus point of light through a lens"""
+        r = max(2.0, s * 0.35)
+        pad = int(r + 2 * sigma + 4)
+        if not (-pad < x < SW + pad and -pad < y < SH + pad):
+            return
+        tw = 0.6 + 0.4 * math.sin(t * 2.3 + p["ph"])
+        patch = np.zeros((2 * pad, 2 * pad, 3), np.float32)
+        c = np.float32(p["col"]) * a * tw
+        cv2.circle(patch, (pad, pad), int(r), tuple(float(v) * 0.55 for v in c), -1, cv2.LINE_AA)
+        cv2.circle(patch, (pad, pad), int(r), tuple(float(v) * 0.8 for v in c), max(1, int(r / 10)), cv2.LINE_AA)
+        _over(buf, cv2.GaussianBlur(patch, (0, 0), max(0.8, sigma * 0.4)), int(x) - pad, int(y) - pad)
+
+
+GREEN = [(40, 120, 60), (50, 150, 90), (30, 100, 70), (60, 160, 120)]
+WHITE = [(235, 238, 242), (220, 228, 235), (245, 245, 250)]
+SUNLIGHT = [(120, 210, 255), (90, 180, 255), (150, 230, 255)]
+MOON = [(255, 235, 210), (255, 220, 190), (230, 240, 255)]
+EMBER = [(90, 170, 255), (70, 140, 255)]
+
+SWARMS = [
+    # "Voa nas asas do vento": autumn leaves tumble on the wind, a gust on "ветра"
+    Depth3D("leaf", E.WIND, 26, 41, LEAF, 34, (260, 40), bursts=E.GUSTS, spin=1.2),
+    # "livres": white feathers float down, slower, turning
+    Depth3D("feather", [E.BIRDS], 16, 42, WHITE, 40, (30, 70), sway=50, spin=0.6, bursts=(E.FLOCK_LIFT,)),
+    # "o sol brilha": sunlit dust, golden bokeh discs rising, swelling on "солнце"
+    Depth3D("orb", [E.SUN], 24, 43, SUNLIGHT, 46, (-10, -40), light=True, bursts=(E.SUN_BLOOM, 44.8)),
+    # "as rosas se abrem": petals behind her too, so the rain has depth
+    Depth3D("petal", [E.ROSES], 22, 44, PINK, 30, (15, 140), sway=40, spin=1.0, near_share=0.35,
+            bursts=(E.ROSE_BURST,)),
+    # "matas verdes": green leaves drift down through the forest, fireflies close to the lens
+    Depth3D("leaf", [E.NIGHTINGALES], 18, 45, GREEN, 30, (20, 90), sway=40, spin=0.9),
+    Depth3D("orb", [E.NIGHTINGALES], 10, 46, [(110, 240, 210), (90, 230, 180)], 40, (8, -15), light=True),
+    # her voice alone under the moon: silver specks drift up with the mist
+    Depth3D("orb", [E.EMBERS], 22, 47, MOON, 22, (6, -30), light=True, near_share=0.6),
+]

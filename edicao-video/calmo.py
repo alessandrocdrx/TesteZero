@@ -137,7 +137,7 @@ def main(src_path, out_path):
         ("УЛЕТАЙ НА КРЫЛЬЯХ ВЕТРА", font(SERIF, 30, b"Medium"), (255, 255, 255, 170), 5, 70),
         ("ALEXANDER BORODIN  ·  PRÍNCIPE IGOR, 1890", font(SERIF, 28, b"SemiBold"), (255, 255, 255, 200), 4, 26),
         ("voz  ·  @kvashenayakto", font(ITALIC, 44, b"Medium Italic"), (255, 255, 255, 255), 0, 10),
-        ("edição  ·  @seu_perfil", font(ITALIC, 44, b"Medium Italic"), (255, 255, 255, 220), 0, 0),
+        ("edição  ·  @alessandrocdrx", font(ITALIC, 44, b"Medium Italic"), (255, 255, 255, 220), 0, 0),
     ], shadow=False)
 
     preview = [float(x) for x in os.environ.get("PREVIEW", "").split(",") if x]

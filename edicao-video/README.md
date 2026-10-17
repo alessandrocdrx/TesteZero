@@ -43,6 +43,16 @@ assume o fundo a uma distância irregular, pictórica (`HALO`).
 | "rouxinóis… matas verdes" | olhamos por entre galhos; vaga-lumes e dois rouxinóis passam |
 | só a voz, sob a lua | névoa do rio rola na frente dela e brilha com a voz |
 
+**Objetos 3D (`Depth3D` em `frente.py`):** folhas, penas, pétalas e pontos de luz giram em 3D (rotação nos três
+eixos, dobra central com sombreamento por normal, verso mais pálido). Cada um tem profundidade: os de z < 1
+passam entre a lente e ela (maiores, mais rápidos, desfocados) e os de z > 1 ficam dentro da pintura, atrás
+dela. Cada enxame reage à palavra da letra (rajada em "ветра", "свободно", "солнце", "розы").
+
+**Para celular:** legenda grande (96 px) que quebra em duas linhas e fica longe dos botões do TikTok/Reels.
+Os @ de @kvashenayakto e @alessandrocdrx flutuam devagar pelo quadro, sem passar pelo rosto, e trocam de faixa a
+cada 12 s, para um repost não conseguir cortar ou cobrir o crédito.
+Os objetos do quarto (cadeira, flores, apanhador de sonhos) nunca aparecem (`clutter`).
+
 Técnica: ela é recortada quadro a quadro com o MediaPipe (segmentação multiclasse + máscara fixa do
 microfone), a borda é refinada com filtro guiado, e os fios de cabelo são descontaminados. O fundo do
 quarto visto através deles é estimado localmente e trocado pela pintura. Onde ela é sólida, o pixel
@@ -98,7 +108,7 @@ PREVIEW="0.8,20,53" python3 mv.py entrada/v.mp4 previa   # confere quadros sem r
 | Atmosfera | Luzes coloridas só nas bordas (máscara protege o rosto) | `EDGE_MASK` |
 | Final | Título, créditos e chamada "Qual parte te arrepiou?" | `ENDCARD` |
 
-Antes de postar, troque `@SEU_PERFIL` pelo seu @ e peça autorização à criadora original.
+Antes de postar, peça autorização à criadora original.
 
 ## Corte viral TikTok (`viral.py`, ~40 s)
 

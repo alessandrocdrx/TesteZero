@@ -9,6 +9,7 @@ import sys
 import cv2
 import mediapipe as mp
 import numpy as np
+from PIL import Image, ImageDraw, ImageFilter
 from mediapipe.tasks.python import BaseOptions, vision
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -171,6 +172,78 @@ class Matte:
         return np.clip(a, 0, 1)
 
 
+CAP_MAX_W = 880   # keeps clear of the TikTok / Reels buttons on the right
+
+
+def _wrap(text, f):
+    """one line if it fits, otherwise two balanced lines"""
+    d = ImageDraw.Draw(Image.new("RGBA", (4, 4)))
+    if d.textlength(text, font=f) <= CAP_MAX_W:
+        return [text]
+    words = text.split()
+    best = min(range(1, len(words)), key=lambda k: max(d.textlength(" ".join(words[:k]), font=f),
+                                                      d.textlength(" ".join(words[k:]), font=f)))
+    return [" ".join(words[:best]), " ".join(words[best:])]
+
+
+def caption(pt, ru, word):
+    """big caption for phones: Russian on top, PT-BR large; plus a layer with only the gold keyword"""
+    pt_f = C.font(C.ITALIC, 96, b"SemiBold Italic")
+    ru_f = C.font(C.SERIF, 36, b"SemiBold")
+    d0 = ImageDraw.Draw(Image.new("RGBA", (4, 4)))
+    ru_lines = _wrap(ru.upper(), ru_f)
+    pt_lines = _wrap(pt, pt_f)
+    rows = [(l, ru_f, (255, 255, 255, 190), 14) for l in ru_lines]
+    rows[-1] = rows[-1][:3] + (26,)
+    rows += [(l, pt_f, (255, 255, 255, 255), 4) for l in pt_lines]
+    heights = [f.getbbox("ÁÇgjУ")[3] + gap for _, f, _, gap in rows]
+    size = (W, sum(heights) + 80)
+    base, gold = Image.new("RGBA", size, (0, 0, 0, 0)), Image.new("RGBA", size, (0, 0, 0, 0))
+    db, dg = ImageDraw.Draw(base), ImageDraw.Draw(gold)
+    y = 40
+    for (text, f, rgba, _), h in zip(rows, heights):
+        x = (W - d0.textlength(text, font=f)) / 2
+        db.text((x, y), text, font=f, fill=rgba)
+        if word and f is pt_f and word in text.split():
+            words = text.split()
+            prefix = " ".join(words[:words.index(word)])
+            gx = x + d0.textlength(prefix + " " if prefix else "", font=f)
+            dg.text((gx, y), word, font=f, fill=E.GOLD + (255,))
+        y += h
+    a = base.split()[3]
+    sh = Image.new("RGBA", size, (0, 0, 0, 0))   # strong soft shadow: legible on any painting
+    sh.putalpha(a.point(lambda v: v * 0.9).filter(ImageFilter.GaussianBlur(10)))
+    edge = Image.new("RGBA", size, (0, 0, 0, 0))
+    edge.putalpha(a.filter(ImageFilter.MaxFilter(5)).point(lambda v: v * 0.45).filter(ImageFilter.GaussianBlur(2)))
+    base = Image.alpha_composite(Image.alpha_composite(sh, edge), base)
+    if not word:
+        return np.array(base), None
+    gold = Image.alpha_composite(gold.filter(ImageFilter.GaussianBlur(12)), gold)
+    return np.array(base), np.array(gold)
+
+
+class Watermarks:
+    """her handle and the editor's drift slowly around the frame (never on her face), so a re-upload
+    cannot crop or cover the credit"""
+
+    def __init__(self):
+        f = C.font(C.SERIF, 42, b"SemiBold")
+        self.spr = [C.text_block([(h, f, (255, 255, 255, 255), 2, 0)]) for h in ("@kvashenayakto", "@alessandrocdrx")]
+
+    def draw(self, img, t):
+        for k, spr in enumerate(self.spr):
+            # each handle wanders along a slow figure in its own band; every 12 s they swap bands
+            band = (k + int(t // 12)) % 2
+            sw = smooth(min(1.0, (t % 12) / 1.2)) * smooth(min(1.0, (12 - t % 12) / 1.2))
+            cy = (150 if band == 0 else 1720) + 30 * math.sin(t * 0.37 + k)
+            dx = 280 * math.sin(t * 0.11 + 2.2 * k) + 40 * math.sin(t * 0.43 + k)
+            h, w = spr.shape[:2]
+            pad = np.zeros((h, W, 4), np.uint8)
+            x0 = int(np.clip(dx, -(W - 440) / 2, (W - 440) / 2))
+            pad[:, max(0, x0):W + min(0, x0)] = spr[:, max(0, -x0):W - max(0, x0)]
+            C.paste(img, pad, cy, 0.62 * sw)
+
+
 def face_mask(face, M, i):
     """1 where effects may appear, 0 on her face and hair, following the camera"""
     cx, cy = face.at(i)
@@ -193,6 +266,12 @@ def main(src_path, npz, bg_dir, model, out_path):
     noises = [noise_field(10 + k) for k in range(len(SCENES))]
     halo_noise = cv2.resize(noise_field(99, scale=11), (720, 1280), interpolation=cv2.INTER_AREA)
     fore = F.Foreground()
+    clutter = np.zeros((1280, 720), np.float32)   # room objects that must never show: chair, flowers, dream catcher
+    cv2.rectangle(clutter, (0, 200), (200, 760), 1.0, -1)
+    cv2.ellipse(clutter, (690, 650), (120, 90), 0, 0, 360, 1.0, -1)
+    cv2.rectangle(clutter, (600, 0), (720, 260), 1.0, -1)
+    clutter = cv2.GaussianBlur(clutter, (0, 0), 25)
+    marks = Watermarks()
     matte = Matte(model)
     face = E.Face(npz)
     motes, birds, petals_back, petals_front, glints, embers = (
@@ -204,7 +283,7 @@ def main(src_path, npz, bg_dir, model, out_path):
     fxs = np.convolve(np.pad(face.cx, 90, mode="edge"), g, mode="valid")
     fys = np.convolve(np.pad(face.cy, 90, mode="edge"), g, mode="valid")
 
-    lyr = [E.line_sprites(pt, ru, E.GOLD_WORDS.get(i, (None,))[0]) for i, (_, _, pt, ru) in enumerate(C.LYRICS)]
+    lyr = [caption(pt, ru, E.GOLD_WORDS.get(i, (None,))[0]) for i, (_, _, pt, ru) in enumerate(C.LYRICS)]
     ctx = C.text_block([
         ("BORODIN  ·  PRÍNCIPE IGOR  ·  1890", C.font(C.SERIF, 28, b"SemiBold"), (255, 255, 255, 200), 5, 30),
         ("Mulheres presas longe de casa", C.font(C.ITALIC, 54, b"Medium Italic"), (255, 255, 255, 255), 0, 6),
@@ -216,7 +295,7 @@ def main(src_path, npz, bg_dir, model, out_path):
         ("ALEXANDER BORODIN  ·  PRÍNCIPE IGOR, 1890", C.font(C.SERIF, 28, b"SemiBold"), (255, 255, 255, 200), 4, 26),
         ("cenários inspirados em Kuindzhi, Levitan e Shishkin", C.font(C.ITALIC, 36, b"Medium Italic"), (255, 255, 255, 190), 0, 26),
         ("voz  ·  @kvashenayakto", C.font(C.ITALIC, 44, b"Medium Italic"), (255, 255, 255, 255), 0, 10),
-        ("edição  ·  @seu_perfil", C.font(C.ITALIC, 44, b"Medium Italic"), (255, 255, 255, 220), 0, 0),
+        ("edição  ·  @alessandrocdrx", C.font(C.ITALIC, 44, b"Medium Italic"), (255, 255, 255, 220), 0, 0),
     ], shadow=False)
 
     preview = [float(x) for x in os.environ.get("PREVIEW", "").split(",") if x]
@@ -286,6 +365,10 @@ def main(src_path, npz, bg_dir, model, out_path):
             birds.draw(bg, t, a, ones)
         if (a := E.env_at(*E.ROSES, t, 0.8, 1.6)) > 0:
             petals_back.draw(bg, t, a, ones, sm)
+        fb = fore.render(t, e, sm)
+        if fb.back[..., 3].any():   # 3D objects behind her live inside the painting
+            bk = cv2.resize(fb.back, (W, H), interpolation=cv2.INTER_LINEAR)
+            bg = np.clip(bg * (1 - bk[..., 3:]) + bk[..., :3], 0, 255).astype(np.uint8)
 
         # ---- her, untouched, over the world ----
         # I + (1-a)(new - plate): where she is solid (a=1) the pixel is exactly hers; in the hair edge the room
@@ -310,7 +393,7 @@ def main(src_path, npz, bg_dir, model, out_path):
         hard = (alpha_src > 0.5).astype(np.uint8)
         dist = cv2.distanceTransform(1 - hard, cv2.DIST_L2, 5)
         reach = HALO[0] + HALO[1] * halo_noise
-        keep = 1 - np.clip((dist - reach) / HALO[2], 0, 1)
+        keep = (1 - np.clip((dist - reach) / HALO[2], 0, 1)) * (1 - clutter)
         keep = cv2.warpAffine(keep * keep * (3 - 2 * keep), Mh_src, (W, H), flags=cv2.INTER_LINEAR,
                               borderMode=cv2.BORDER_REPLICATE)[..., None]
         real = cv2.warpAffine(src, Mh_src, (W, H), flags=cv2.INTER_LANCZOS4,
@@ -344,7 +427,7 @@ def main(src_path, npz, bg_dir, model, out_path):
         if front.any():
             Fl = cv2.GaussianBlur(cv2.resize(front, (W, H), interpolation=cv2.INTER_LINEAR), (0, 0), 1.4) * mask[..., None]
             img = 255 - (255 - img) * (255 - np.clip(Fl, 0, 255)) / 255
-        img = F.Foreground.composite(img, fore.render(t, e, sm), mask, W, H)
+        img = F.Foreground.composite(img, fb, mask, W, H)
         img = np.clip(img, 0, 255).astype(np.uint8)
         if (a := E.env_at(*E.ROSES, t, 0.8, 1.6)) > 0:
             petals_front.draw(img, t, a, mask, sm)
@@ -363,6 +446,7 @@ def main(src_path, npz, bg_dir, model, out_path):
                 C.paste(img, gold, cy, la * smooth((t - E.GOLD_WORDS[li][1] + 0.15) / 0.5))
         if t >= C.CARD:
             C.paste(img, card, 880, smooth((t - C.CARD) / 0.9))
+        marks.draw(img, t)
 
         if preview:
             if os.environ.get("FULL"):

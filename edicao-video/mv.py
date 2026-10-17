@@ -370,7 +370,7 @@ def main(src_path, out_path):
         text_sprite("DO VENTO", ANTON, 190, PINK, stroke=7, stroke_fill=WHITE, shadow=12),
         text_sprite("Borodin · Príncipe Igor (1890)", DEJAVU_B, 36, WHITE, stroke=2),
         text_sprite("VOZ: @KVASHENAYAKTO", ARCHIVO, 40, YELLOW, stroke=3),
-        text_sprite("EDIÇÃO: @SEU_PERFIL", ARCHIVO, 40, WHITE, stroke=3),
+        text_sprite("EDIÇÃO: @alessandrocdrx", ARCHIVO, 40, WHITE, stroke=3),
         text_sprite("QUAL PARTE TE ARREPIOU?", ANTON, 84, YELLOW, stroke=5, shadow=8),
     ]
     sparkles = Sparkles()
