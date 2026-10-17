@@ -61,7 +61,7 @@ SHOTS = [
     (78.0, 1.12, 1.16, "M"),
     (82.4, 1.08, 1.02, "W"),   # back home, the camera settles
 ]
-HALO = (4, 16, 70)     # room kept around her (source px): base reach, painterly variation, feather
+HALO = (0, 0, 1)       # room kept around her (source px): base reach, painterly variation, feather
 PARALLAX = 1.8   # the painting moves 1.8x the camera: depth behind her
 
 
@@ -247,6 +247,89 @@ class Watermarks:
             C.paste(img, pad, cy, 0.62 * sw)
 
 
+def load_room(path):
+    """the empty room (quarto.py): plate, where it is known, and the objects that must never show"""
+    d = np.load(path)
+    obj = cv2.dilate(d["never"].astype(np.uint8), np.ones((31, 31), np.uint8)).astype(np.float32)
+    tight = cv2.GaussianBlur(d["objects"].astype(np.float32), (0, 0), 1.5)
+    return dict(plate=d["plate"].astype(np.float32), known=d["known"], objects=d["objects"].astype(bool),
+                chair=d["chair"].astype(bool),
+                chair_soft=cv2.GaussianBlur(d["chair"].astype(np.float32), (0, 0), 3),
+                plate_chair=chair_colour(d["plate"]) > 0.5,
+                plate_chair_soft=cv2.GaussianBlur((chair_colour(d["plate"]) > 0.5).astype(np.float32), (0, 0), 3),
+                reliable=np.clip((d["seen"] - 0.08) / 0.1, 0, 1).astype(np.float32),   # wall seen often enough
+                tight=tight, never=cv2.GaussianBlur(obj, (0, 0), 30))
+
+
+def looks_like_room(src, room, full=50, none=70):
+    """1 where this frame shows the empty room unchanged (nothing of her in front); summed BGR difference
+    below `full` is certain, above `none` it is not the room"""
+    d = np.abs(src.astype(np.float32) - room["plate"]).sum(2)
+    return (np.clip((none - d) / (none - full), 0, 1) * room["known"]).astype(np.float32)
+
+
+def chair_colour(src):
+    """the chair is near-black (max channel < 50) and neutral to blue (b-r from -20 to +6, it drifts with the
+    camera's white balance); her hair, even in shadow, is far warmer (b-r -35 to -70)"""
+    f = src.astype(np.int16)
+    v = f.max(2)
+    return np.clip((f[..., 0] - f[..., 2] + 28) / 6, 0, 1) * np.clip((60 - v) / 12, 0, 1)
+
+
+def face_guard(boxes, i):
+    """source-coords ellipse over her face and forehead that no cleanup may ever touch"""
+    x, y, w, h = boxes[min(i, len(boxes) - 1)]
+    g = np.zeros((1280, 720), np.float32)
+    cv2.ellipse(g, (int(x + w / 2), int(y + h * 0.5)), (int(w * 0.42), int(h * 0.62)), 0, 0, 360, 1.0, -1)
+    return cv2.GaussianBlur(g, (0, 0), 6)
+
+
+def clean_alpha(src, alpha, room, guard=None):
+    """Refine the segmenter's loose alpha with a clean-plate difference key: the camera never moves, so in her
+    outline any pixel equal to the empty room is background, and hair strands get their true partial alpha.
+    Her solid body (well inside the confident area) and her face are never touched."""
+    d = np.abs(src.astype(np.float32) - room["plate"]).sum(2)
+    diff_key = np.clip((d - 18) / 42, 0, 1)                       # 0 = exactly the room, 1 = clearly not
+    core = cv2.erode((alpha > 0.97).astype(np.uint8), np.ones((27, 27), np.uint8)).astype(np.float32)
+    rim = 1 - cv2.GaussianBlur(core, (0, 0), 5)
+    trust = room["reliable"] * rim                                # where the plate is good and she may not be
+    # the chair under warm light is too close to her shadowed hair for a colour test: inside its outline the
+    # chair's own signature (near-black, neutral) counts as room as well
+    room_like = np.maximum(1 - diff_key, room["chair_soft"] * chair_colour(src))
+    wrong = np.maximum(trust * (1 - diff_key), room["chair_soft"] * room_like * rim)
+    if guard is not None:
+        wrong = wrong * (1 - guard)
+    out = (alpha * (1 - wrong)).astype(np.float32)
+    # the real edge between hair and room is found again in the image itself: soft, natural strands
+    ref = cv2.ximgproc.guidedFilter(src.astype(np.float32) / 255, out, 8, 3e-3)
+    zone = np.clip(cv2.GaussianBlur((wrong > 0.02).astype(np.float32), (0, 0), 10) * 3, 0, 1)
+    return np.clip(out * (1 - zone) + np.minimum(ref, alpha) * zone, 0, 1).astype(np.float32)
+
+
+def room_keep(alpha_src, halo_noise, room):
+    """how much of the real room stays around her (source coords): a painterly halo, never over the room's objects"""
+    hard = (alpha_src > 0.5).astype(np.uint8)
+    dist = cv2.distanceTransform(1 - hard, cv2.DIST_L2, 5)
+    reach = HALO[0] + HALO[1] * halo_noise
+    keep = (1 - np.clip((dist - reach) / HALO[2], 0, 1)) * (1 - room["never"])
+    return (keep * keep * (3 - 2 * keep)).astype(np.float32)
+
+
+def room_leak(src, alpha_src, keep, room):
+    """test: share of the room's objects visible in the output, and in pixels (source scale)"""
+    vis = leak_map(src, alpha_src, keep, room)
+    return float(vis.max()), float((vis > 0.15).sum())   # strongest leak, and perceivable leaked pixels
+
+
+def leak_map(src, alpha_src, keep, room):
+    """per pixel: how visible a room object is in the output. A pixel counts as 'object' only by evidence that
+    cannot be her: the empty room's own pixel where the wall was seen often, or the chair's colour"""
+    real_obj = room["objects"] | (room["chair"] & room["plate_chair"])   # actual object pixels, not wall in the hull
+    shows = np.maximum(looks_like_room(src, room, 35, 45) * real_obj * np.maximum(room["objects"], room["reliable"]),
+                       chair_colour(src) * room["chair"])
+    return (keep + (1 - keep) * alpha_src) * shows * (room["objects"] | room["chair"])
+
+
 def face_mask(face, M, i):
     """1 where effects may appear, 0 on her face and hair, following the camera"""
     cx, cy = face.at(i)
@@ -269,11 +352,8 @@ def main(src_path, npz, bg_dir, model, out_path):
     noises = [noise_field(10 + k) for k in range(len(SCENES))]
     halo_noise = cv2.resize(noise_field(99, scale=11), (720, 1280), interpolation=cv2.INTER_AREA)
     fore = F.Foreground()
-    clutter = np.zeros((1280, 720), np.float32)   # room objects that must never show: chair, flowers, dream catcher
-    cv2.rectangle(clutter, (0, 200), (200, 760), 1.0, -1)
-    cv2.ellipse(clutter, (690, 650), (120, 90), 0, 0, 360, 1.0, -1)
-    cv2.rectangle(clutter, (600, 0), (720, 260), 1.0, -1)
-    clutter = cv2.GaussianBlur(clutter, (0, 0), 25)
+    boxes_src = np.load(npz)["boxes"]
+    room = load_room(os.environ.get("ROOM", os.path.join(os.path.dirname(npz), "quarto.npz")))
     marks = Watermarks()
     cache = os.environ.get("MATTE_CACHE")
     live = Matte(model)
@@ -332,7 +412,7 @@ def main(src_path, npz, bg_dir, model, out_path):
         Mh, Mb, (qx, qy) = camera(t, fx, fy, e)
         Mh_src = Mh.copy()
         Mh_src[:, :2] *= W / src.shape[1]   # her layer is warped once, straight from the 720p source
-        alpha_src = matte(src, int(t * 1000), min(i, n - 1))
+        alpha_src = clean_alpha(src, matte(src, int(t * 1000), min(i, n - 1)), room, face_guard(boxes_src, i))
 
         # ---- the world behind her: each painting moves with the parallax camera; changes are dolly-zoom rushes ----
         bg, rush = None, 0.0
@@ -392,22 +472,22 @@ def main(src_path, npz, bg_dir, model, out_path):
         num = cv2.GaussianBlur(cv2.resize(rf, (sw, shh), interpolation=cv2.INTER_AREA) * wgt[..., None], (0, 0), 4)
         den = cv2.GaussianBlur(wgt, (0, 0), 4)[..., None] + 1e-4
         plate = cv2.resize(num / den, (src.shape[1], src.shape[0]), interpolation=cv2.INTER_LINEAR)
+        plate = np.where(room["known"][..., None], room["plate"], plate)   # the real empty room where it was seen
         fgp = rf - (1 - alpha_src[..., None]) * plate          # her, premultiplied
         fg = cv2.warpAffine(fgp, Mh_src, (W, H), flags=cv2.INTER_LANCZOS4, borderMode=cv2.BORDER_REPLICATE)
         alpha = np.clip(cv2.warpAffine(alpha_src, Mh_src, (W, H), flags=cv2.INTER_LINEAR,
                                        borderMode=cv2.BORDER_REPLICATE), 0, 1)
         bgf = bg.astype(np.float32)
         al = alpha[..., None]
-        edge = np.clip(alpha * (1 - alpha) * 4, 0, 1)
+        # light wrap only on her real outline (where alpha changes fast), never across a wide soft area
+        gx, gy = cv2.Sobel(alpha, cv2.CV_32F, 1, 0, ksize=3), cv2.Sobel(alpha, cv2.CV_32F, 0, 1, ksize=3)
+        edge = np.clip(cv2.GaussianBlur(np.sqrt(gx * gx + gy * gy), (0, 0), 2) * 6, 0, 1) * np.clip(alpha * (1 - alpha) * 4, 0, 1)
         wrap = cv2.GaussianBlur(bgf, (0, 0), 14) * (edge[..., None] * (0.35 + 0.1 * rush))  # the flash rims her
         world = fg + (1 - al) * bgf + wrap * (1 - al * 0.5)
         # no hard key: around her the real room stays, and the painting takes over at a painterly distance.
         # her hair always sits on its true background, so there is no cut-out edge to see
-        hard = (alpha_src > 0.5).astype(np.uint8)
-        dist = cv2.distanceTransform(1 - hard, cv2.DIST_L2, 5)
-        reach = HALO[0] + HALO[1] * halo_noise
-        keep = (1 - np.clip((dist - reach) / HALO[2], 0, 1)) * (1 - clutter)
-        keep = cv2.warpAffine(keep * keep * (3 - 2 * keep), Mh_src, (W, H), flags=cv2.INTER_LINEAR,
+        keep = room_keep(alpha_src, halo_noise, room)
+        keep = cv2.warpAffine(keep, Mh_src, (W, H), flags=cv2.INTER_LINEAR,
                               borderMode=cv2.BORDER_REPLICATE)[..., None]
         real = cv2.warpAffine(src, Mh_src, (W, H), flags=cv2.INTER_LANCZOS4,
                               borderMode=cv2.BORDER_REPLICATE).astype(np.float32)

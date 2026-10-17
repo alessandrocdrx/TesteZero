@@ -126,3 +126,9 @@ Antes de postar, peça autorização à criadora original.
 - Legenda palavra por palavra no estilo CapCut (Montserrat Black, palavra ativa em amarelo).
 - Cortes de câmera a cada ~2 s, zoom contínuo até o clímax, "AQUI." no ponto alto.
 - Chamada final "salva pra ouvir de novo" (salvamentos pesam no algoritmo) + crédito da voz.
+
+## Quarto vazio e testes automáticos
+
+- `quarto.py` monta o quarto vazio (`entrada/quarto.npz`): a placa limpa e a máscara da cadeira. O `mundo.py` usa essa placa para tirar do recorte tudo o que é igual ao quarto vazio.
+- `qa_vazamento.py` verifica se o quarto ou a cadeira aparecem atrás dela e gera um mapa de calor. `qa_ela.py` confere que o recorte não tirou nada do rosto nem do corpo.
+- `PROMPT_OUTROS_VIDEOS.md` é um prompt para reaproveitar em outros vídeos: cache, 3D em profundidade, testes e o fluxo de revisão.
