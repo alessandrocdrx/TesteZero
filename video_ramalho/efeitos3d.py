@@ -126,6 +126,37 @@ def bolha():
     return juntar((lathe([(max(math.sin(x), 0.001), -math.cos(x)) for x in a], 18), (200, 235, 255), False))
 
 
+def faisca():
+    """Faísca: tetraedro emissivo laranja."""
+    V = np.array([[0, -1, 0], [0.8, 0.5, 0.45], [-0.8, 0.5, 0.45], [0, 0.5, -0.9]], float) * 0.6
+    F = [(0, 1, 2), (0, 2, 3), (0, 3, 1), (1, 3, 2)]
+    return juntar(((V, F), (255, 170, 50), True))
+
+
+def registro():
+    """Registro de gás (corpo de latão + manopla vermelha) com mangueira (toro parcial)."""
+    corpo = lathe([(0.001, -0.5), (0.22, -0.5), (0.22, 0.5), (0.001, 0.5)], 18)
+    corpo = (corpo[0][:, [1, 0, 2]], corpo[1])  # deitado no eixo X
+    bloco = lathe([(0.001, -0.3), (0.34, -0.3), (0.34, 0.3), (0.001, 0.3)], 18)
+    haste = transl(lathe([(0.001, -0.55), (0.07, -0.55), (0.07, -0.25), (0.001, -0.25)], 10), (0, 0, 0))
+    Vm, Fm = extrude([(-0.6, -0.12), (0.6, -0.12), (0.6, 0.12), (-0.6, 0.12)], 0.12)
+    manopla = (Vm[:, [0, 2, 1]] + [0, -0.62, 0], Fm)  # alavanca horizontal em cima da haste
+    Vt, Ft = torus(0.55, 0.11, 24, 8)
+    Vt = Vt[:, [0, 2, 1]] + [1.05, 0.55, 0]  # mangueira saindo pela direita e descendo
+    return juntar((corpo, (205, 165, 70), False), (bloco, (215, 175, 80), False), (haste, (180, 180, 185), False),
+                  (manopla, (220, 40, 40), False), ((Vt, Ft), (230, 160, 40), False))
+
+
+def selo(t):
+    """Selo: disco metálico grosso com uma chama amarelo-laranja (a chama do logo) na frente."""
+    disco = lathe([(0.001, -0.14), (1.0, -0.14), (1.08, -0.07), (1.08, 0.07), (1.0, 0.14), (0.001, 0.14)], 40)
+    disco = (disco[0][:, [0, 2, 1]], disco[1])  # de frente para a câmera
+    aro = torus(1.0, 0.08, 40, 8); aro = (aro[0][:, [0, 2, 1]] + [0, 0, -0.16], aro[1])
+    (Vc, Fc), cor, _ = chama(t, (255, 150, 30), 1.25, seed=3)
+    Vc = Vc * [1.6, 1, 1.6] + [0, 0.62, -0.32]
+    return juntar((disco, (40, 44, 52), False), (aro, (230, 180, 60), False), ((Vc, Fc), cor, True))
+
+
 # ---------- render ----------
 def rot(ax, ay, az):
     cx, sx, cy, sy, cz, sz = math.cos(ax), math.sin(ax), math.cos(ay), math.sin(ay), math.cos(az), math.sin(az)

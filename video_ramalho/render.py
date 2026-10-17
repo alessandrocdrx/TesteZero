@@ -30,7 +30,7 @@ for w in PAL:
 
 
 def palavra(txt, n=0):
-    hits = [w for w in PAL if w["w"].strip(".,?!:").lower() == txt.lower()]
+    hits = [w for w in PAL if w["w"].strip(".,?!:").lower() == txt.strip(".,?!:").lower()]
     return hits[n]["s"]
 
 
@@ -42,10 +42,20 @@ def energia(t):
     return float(VOZ[i]) if 0 <= i < len(VOZ) else 0.0
 
 
-# ---------- cenas: (nome do clipe, início, fim no vídeo, tempo do clipe = a*t + b, plano) ----------
+# ---------- cenas: (clipe, início, fim no vídeo, tempo do clipe = a*t + b, plano, opções) ----------
 T_AZUL = palavra("Chama", 2)  # "Chama azul" (0: chama amarela, 1: Chama Ramalho)
-CENAS = [
-    ("cena05", 11.8, 15.6, (1.0, 2.0 - T_AZUL), 1.06),
+FIM = 25.0  # tela final até aqui
+CORTES = [0.0, 4.1, 5.6, 9.25, 11.8, 15.15, 17.6, FIM]
+A_FIM = (5.0 - 3.05) / (FIM - 17.6)
+CENAS = [  # trechos do clipe escolhidos pela folha de contato
+    ("cena01", 0.0, 4.1, (1.0, 0.6), 1.04, {"sem_rosto": True}),               # chama amarela falha e apaga
+    ("cena02", 4.1, 5.6, (1.8, 2.2 - 1.8 * 4.1), 1.0, {}),                     # entra com a caixa e sorri
+    ("cena03", 5.6, 9.25, (1.2, 0.5 - 1.2 * 5.6), 1.02, {}),                   # chave, depois escova
+    ("cena04", 9.25, 11.8, (1.3, 1.6 - 1.3 * 9.25), 1.0, {}),                  # acende o industrial e mostra
+    ("cena05", 11.8, 15.15, (1.0, 2.0 - T_AZUL), 1.06, {}),                    # chama azul
+    ("cena06", 15.15, 17.6, (1.0, 0.6 - 15.15), 1.04, {}),                     # joinha
+    # tela final: o fim do clipe 6 em câmera lenta, desfocado e escurecido, com o selo, o telefone e o número
+    ("cena06", 17.6, FIM, (A_FIM, 3.05 - 17.6 * A_FIM), 1.04, {"fim": True}),
 ]
 
 
@@ -54,6 +64,16 @@ def cena_em(t):
         if c[1] <= t < c[2]:
             return c
     return CENAS[-1]
+
+
+def dolly(t):
+    """Dolly-zoom na troca de cena: o fundo encolhe e o personagem cresce ao mesmo tempo (0,4 s após o corte)."""
+    for c in CORTES[1:-2]:
+        u = t - c
+        if 0 <= u < 0.4:
+            e = (1 - u / 0.4) ** 2
+            return 1 + 0.16 * e, 1 - 0.07 * e
+    return 1.0, 1.0
 
 
 # ---------- efeitos 3D: palavra → objeto (tabela do PLANO.md) ----------
@@ -67,27 +87,110 @@ def env(t, t0, dur, ent=0.25, sai=0.35):
     return up * (1.0 if b >= 1 else max(b, 0))
 
 
+def ease(u):
+    u = min(max(u, 0.0), 1.0)
+    return 1 - (1 - u) ** 3
+
+
 def efeitos(t, info):
-    """Lista de objetos ativos em t: (malha, rotação, centro_px(x,y) em AW×AH, z, tamanho_base_px, brilho)."""
+    """Objetos ativos em t: (malha, rotação, centro_px(x,y) em AW×AH, z, tamanho_base_px, brilho, nome do efeito)."""
     out = []
     fx0, fy0, fx1, fy1 = info["rosto"]; bx0, by0, bx1, by1 = info["corpo"]
-    cx = (fx0 + fx1) / 2
+    cx = (fx0 + fx1) / 2 if fx1 > fx0 else AW / 2
+
+    def add(malha, R, x, y, z, tam, glow, nome):
+        if tam > 4:
+            out.append((malha, R, (x, y), z, tam, glow, nome))
+
+    # 1. "amarela": chama amarela entra pela esquerda, treme e falha
+    t1 = palavra("amarela"); k = env(t, t1 - 0.05, CORTES[1] - t1 + 0.05)
+    if k > 0:
+        falha = 1.0 if math.sin(9.0 * t) > -0.55 else 0.45
+        x = -60 + 250 * ease((t - t1) / 0.45)
+        add(e3.juntar(e3.chama(t, (255, 190, 30), 1.0, seed=1)), e3.rot(0.1, 0.8 * t, 0.15 * math.sin(6 * t)),
+            x, 0.40 * AH, 0.8, 250 * k * falha * (0.9 + 0.1 * math.sin(23 * t)), True, "amarela")
+    # 2. "falhando": faíscas (tetraedros) estouram do queimador e caem, em várias profundidades
+    t2 = palavra("Falhando")
+    for rajada in (0.0, 0.45):
+        for j in range(8):
+            u = t - (t2 - 0.05 + rajada + 0.03 * j)
+            if 0 <= u < 0.9:
+                ang = -math.pi / 2 + (j - 3.5) * 0.32
+                x = 0.55 * AW + 260 * math.cos(ang) * u
+                y = 0.58 * AH + 330 * math.sin(ang) * u + 520 * u * u
+                add(e3.faisca(), e3.rot(5 * u + j, 7 * u, j), x, y, 0.7 + 0.8 * j / 7, 70 * (1 - u / 0.9) + 10, True, "falhando")
+    # 3. "acender?": interrogação gira e some no corte
+    t3 = palavra("acender?"); k = env(t, t3 - 0.05, CORTES[1] - t3 + 0.05)
+    if k > 0:
+        add(e3.interrogacao(), e3.rot(0.15, 4.0 * (t - t3), 0), 0.74 * AW, 0.24 * AH, 0.9, 230 * k, False, "acender")
+    # 4. "Ramalho Fogões": selo com a chama do logo, pop no centro-baixo e órbita curta
+    t4 = palavra("Ramalho", 0); k = env(t, t4 - 0.05, CORTES[2] - t4 + 0.05)
+    if k > 0:
+        u = t - t4
+        add(e3.selo(t), e3.rot(0.1, 0.5 * math.sin(2.2 * u), 0), AW / 2 + 70 * math.sin(1.8 * u), 0.52 * AH,
+            0.9 + 0.08 * math.cos(1.8 * u), 230 * k, True, "ramalho")
+    # 5. "Conserto": chave inglesa orbita o técnico (z 0,8 → 1,4)
+    t5 = palavra("Concerto,"); k = env(t, t5 - 0.05, CORTES[3] - t5 + 0.05)
+    if k > 0:
+        a = 2.1 * (t - t5) - 0.6
+        add(e3.chave_inglesa(), e3.rot(0.3, a + 1.2, 0.5), cx + 175 * math.cos(a), fy1 + 70 + 35 * math.sin(a),
+            1.1 - 0.3 * math.sin(a), 210 * k, False, "conserto")
+    # 6. "regulagem": botão de fogão gira 270°
+    t6 = palavra("regulagem,"); k = env(t, t6 - 0.05, 2.1)
+    if k > 0:
+        add(e3.botao(), e3.rot(-0.9, 0, 1.5 * math.pi * ease((t - t6) / 1.2)), max(100, bx0 + 30), min(fy1 + 260, 0.7 * AH),
+            0.85, 170 * k, False, "regulagem")
+    # 7. "limpeza": bolhas sobem em várias profundidades (bokeh)
+    t7 = palavra("limpeza"); k = env(t, t7 - 0.05, CORTES[3] - t7 + 0.05)
+    if k > 0:
+        for j in range(9):
+            u = t - t7 - 0.11 * j
+            if u > 0:
+                z = 0.6 + 1.4 * ((j * 5) % 9) / 8
+                add(e3.bolha(), e3.rot(0.2, u, 0), 60 + (j * 173) % 420 + 15 * math.sin(3 * u + j), 0.86 * AH - 300 * u,
+                    z, 75 * k, False, "limpeza")
+    # 8. "conversão de gás": botijão gira atrás do ombro
+    t8 = palavra("conversão"); k = env(t, t8 - 0.05, CORTES[3] - t8 + 0.05)
+    if k > 0:
+        add(e3.botijao(), e3.rot(0.15, 1.6 * (t - t8), 0), min(fx1 + 95, AW - 90), fy1 + 30, 1.2, 250 * k, False, "conversao")
+    # 9. "Instalação": registro com mangueira desliza para o lugar
+    t9 = palavra("Instalação"); k = env(t, t9 - 0.05, CORTES[4] - t9 + 0.05)
+    if k > 0:
+        x = AW + 120 - (AW + 120 - min(cx + 150, AW - 110)) * ease((t - t9) / 0.5)
+        add(e3.registro(), e3.rot(0.35, -0.5 + 0.25 * math.sin(2 * t), 0), x, min(fy1 + 210, 0.7 * AH), 0.9, 210 * k, False, "instalacao")
+    # 10. "industrial": anel de 6 chamas azuis faz uma órbita completa ao redor do técnico
+    t10 = palavra("industrial."); k = env(t, t10 - 0.05, T_AZUL - t10 + 0.1)  # passa o bastão aos anéis da "Chama azul"
+    if k > 0:
+        a = 2 * math.pi * (t - t10) / 1.2 - math.pi / 2
+        add(e3.anel_de_chamas(t * 1.4, n=6, cor=(30, 110, 255)), e3.rot(0.4, 0.8 * t, 0), cx + 190 * math.cos(a),
+            min(fy1 + 140, 0.62 * AH), 1.0 + 0.3 * math.sin(a), 220 * k, True, "industrial")
     # 11. "Chama azul": dois anéis de chama orbitando em sentidos opostos, abaixo do rosto
-    t0 = T_AZUL - 0.05
-    k = env(t, t0, CENAS[-1][2] - t0 + 0.1)  # fica até o corte (sai na transição)
+    t0 = T_AZUL - 0.05; k = env(t, t0, CORTES[5] - t0 + 0.1)
     if k > 0:
         for sent, fase, dy in ((1, 0.0, 0.0), (-1, math.pi, 70.0)):
             a = sent * 2.2 * (t - t0) + fase
             z = 1.0 + 0.32 * math.sin(a)  # z<1 na frente, z>1 atrás
-            x = cx + 190 * math.cos(a)
-            y = min(fy1 + 130, 0.6 * AH) + dy + 18 * math.sin(a + 0.6)
-            out.append((e3.anel_de_chamas(t * (1.3 + 0.2 * sent), cor=(30, 110, 255)), e3.rot(0.42, 0.9 * t * sent, 0.0),
-                        (x, y), z, 215 * k, True, "chama azul"))
+            add(e3.anel_de_chamas(t * (1.3 + 0.2 * sent), cor=(30, 110, 255)), e3.rot(0.42, 0.9 * t * sent, 0.0),
+                cx + 190 * math.cos(a), min(fy1 + 130, 0.6 * AH) + dy + 18 * math.sin(a + 0.6), z, 215 * k, True, "chama azul")
     # 12. "bem feito": check 3D com brilho, à direita do peito
-    t1 = palavra("bem")
-    k = env(t, t1 - 0.05, CENAS[-1][2] - t1 + 0.15)
+    t12 = palavra("bem"); k = env(t, t12 - 0.05, CORTES[5] - t12 + 0.15)
     if k > 0:
-        out.append((e3.check(), e3.rot(0.15, 0.6 * math.sin(2.5 * (t - t1)), -0.1), (min(bx1 - 40, AW - 120), fy1 + 215), 0.85, 150 * k, True, "bem feito"))
+        add(e3.check(), e3.rot(0.15, 0.6 * math.sin(2.5 * (t - t12)), -0.1), min(bx1 - 40, AW - 120), fy1 + 215, 0.85, 150 * k, True, "bem feito")
+    # 13. "Curitiba e Região": pino de mapa cai e quica
+    t13 = palavra("Curitiba"); k = env(t, t13 - 0.05, CORTES[6] - t13 + 0.05, ent=0.05)
+    if k > 0:
+        u = t - t13 + 0.05; yt = min(fy1 + 150, 0.62 * AH)
+        y = -80 + (yt + 80) * (u / 0.35) ** 2 if u < 0.35 else yt - 45 * abs(math.sin(9 * (u - 0.35))) * math.exp(-4 * (u - 0.35))
+        add(e3.pino(), e3.rot(0.1, 2.0 * u, 0), max(95, bx0 - 5), y, 0.9, 190 * k, False, "curitiba")
+    # tela final: selo da Ramalho no alto
+    k = env(t, CORTES[6], FIM - CORTES[6] + 1, ent=0.4)
+    if k > 0:
+        add(e3.selo(t), e3.rot(0.1, 0.45 * math.sin(1.3 * t), 0), AW / 2, 0.255 * AH, 0.95, 220 * k, True, "selo final")
+    # 14. "WhatsApp": telefone genérico gira e fixa; o número fica até o fim
+    t14 = palavra("WhatsApp."); k = env(t, t14 - 0.05, FIM - t14 + 1)
+    if k > 0:
+        ry = 4 * math.pi * (1 - math.exp(-2.5 * (t - t14))) + 0.25 * math.sin(1.5 * t)
+        add(e3.telefone(), e3.rot(0.1, ry, 0.12), AW / 2, 0.49 * AH, 0.9, 190 * k, True, "whatsapp")
     return out
 
 
@@ -154,7 +257,7 @@ def blend_sprite(out, sp, x, y, alpha_extra=None, screen=False):
 
 def render_quadro(t, final, cache_fr, diag=False):
     W, H = tamanho(final); f = W / AW
-    nome, ta, tb, (a, b), plano = cena_em(t)
+    nome, ta, tb, (a, b), plano, op = cena_em(t)
     an = np.load(os.path.join(DIR, f"analise_{nome}.npz"))
     tc = a * t + b
     # clipes Kling a 24 fps → 30 fps: mistura os dois quadros vizinhos (sem trepidação nem tremulação de cadência)
@@ -166,14 +269,18 @@ def render_quadro(t, final, cache_fr, diag=False):
         img = img * (1 - fr) + quadro_clipe(nome, j, W, H, cache_fr) * fr
         m = m * (1 - fr) + m1 * fr; placa = placa * (1 - fr) + placa1 * fr
     info = {"rosto": an["rosto"][i], "corpo": an["corpo"][i]}
+    if op.get("sem_rosto") or op.get("fim"):
+        info["rosto"] = np.zeros(4, np.float32)
     zoom, sx, sy, dx = camera(t, plano)
+    zf, zp = dolly(t)
     # paralaxe: fundo (placa) anda 1,8x mais que o personagem
-    fundo = warp(placa, zoom * 1.015, (1.8 * dx + sx) * f, sy * f, W, H)
-    frente = warp(img, zoom, (dx + sx) * f, sy * f, W, H)
-    mask = warp(m, zoom, (dx + sx) * f, sy * f, W, H, cv2.BORDER_CONSTANT)
+    fundo = warp(placa, zoom * 1.015 * zf, (1.8 * dx + sx) * f, sy * f, W, H)
+    frente = warp(img, zoom * zp, (dx + sx) * f, sy * f, W, H)
+    mask = warp(m, zoom * zp, (dx + sx) * f, sy * f, W, H, cv2.BORDER_CONSTANT)
+    zoom_p = zoom * zp
 
     def proj(px, py):  # ponto da análise (AW×AH) → tela, com a mesma câmera do personagem
-        return ((px - AW / 2) * zoom + AW / 2 + dx + sx) * f, ((py - AH / 2) * zoom + AH / 2 + sy) * f
+        return ((px - AW / 2) * zoom_p + AW / 2 + dx + sx) * f, ((py - AH / 2) * zoom_p + AH / 2 + sy) * f
 
     fx0, fy0 = proj(*info["rosto"][:2]); fx1, fy1 = proj(*info["rosto"][2:])
     zona_rosto = np.ones((H, W), np.float32)
@@ -184,6 +291,11 @@ def render_quadro(t, final, cache_fr, diag=False):
     yy = np.linspace(0, 1, H, dtype=np.float32)[:, None, None]
     nevoa = (0.10 * np.clip((yy - 0.45) / 0.55, 0, 1)) * np.array([0.75, 0.85, 1.0], np.float32)
     fundo = 1 - (1 - fundo) * (1 - nevoa)
+    if op.get("fim"):  # tela final: a cena vira fundo desfocado e escurecido; os objetos ficam livres
+        u = min(1.0, (t - ta) / 0.4)
+        cena = frente * mask[..., None] + fundo * (1 - mask[..., None])
+        fundo = cena * (1 - u) + cv2.GaussianBlur(cena, (0, 0), 1 + 17 * u * f) * u * (1 - 0.55 * u)
+        mask = mask * 0
     out = fundo.copy()
     objs = sorted(efeitos(t, info), key=lambda o: -o[3])  # de trás para frente
     brilho = np.zeros_like(out)
@@ -264,6 +376,13 @@ def gerar_ass(path, W, H):
         L.append(f"Dialogue: 1,{ts(st)},{ts(en)},Leg,,0,0,0,,{{\\fad(80,120)\\fscx90\\fscy90\\t(0,140,\\fscx100\\fscy100)}}{txt}")
     pop = "{\\fad(120,300)\\fscx60\\fscy60\\t(0,200,\\fscx112\\fscy112)\\t(200,380,\\fscx100\\fscy100)}"
     L.append(f"Dialogue: 2,{ts(T_AZUL - 0.05)},{ts(T_AZUL + 1.6)},Big,,0,0,0,,{{\\pos({W//2},{int(H*0.665)})}}{pop}CHAMA AZUL")
+    t4 = palavra("Ramalho", 0)
+    L.append(f"Dialogue: 2,{ts(t4 - 0.05)},{ts(CORTES[2])},Big,,0,0,0,,{{\\pos({int(W*0.46)},{int(H*0.665)})\\fs{int(104*k)}\\c&H0030C8FF&}}{pop}RAMALHO FOGÕES")
+    # tela final: nome, número e região (o número entra quando é falado e fica até o fim)
+    cx = int(W * 0.46)
+    L.append(f"Dialogue: 2,{ts(CORTES[6] + 0.1)},{ts(FIM)},Big,,0,0,0,,{{\\pos({cx},{int(H*0.385)})\\fs{int(100*k)}\\c&H0030C8FF&}}{pop}RAMALHO FOGÕES")
+    L.append(f"Dialogue: 2,{ts(palavra('41'))},{ts(FIM)},Big,,0,0,0,,{{\\pos({cx},{int(H*0.605)})\\fs{int(92*k)}\\c&H00FFFFFF&}}{pop}(41) 98485-1317")
+    L.append(f"Dialogue: 2,{ts(palavra('41') + 0.3)},{ts(FIM)},Big,,0,0,0,,{{\\pos({cx},{int(H*0.665)})\\fs{int(58*k)}\\c&H00FFB040&}}{pop}Curitiba e Região")
     # @ flutuando: pequenos \move de ida e volta, dentro da safe zone (topo 250 px, esquerda 60 px)
     x0, y0 = int(70 * k), int(270 * k)
     t = 0.0

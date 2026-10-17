@@ -35,22 +35,34 @@ for t in T:
     _, d = R.render_quadro(t, a.final, cache_fr, diag=True)
     D.append(d)
 
-# ---------- 2. Integridade do personagem (consistência + deformação) ----------
-cores, d_cor = [], []
-for i in range(N):
+# ---------- 2. Integridade do personagem (consistência na cena e entre cenas + deformação) ----------
+cena_de = [R.cena_em(t) for t in T]
+com_pers = [i for i in range(N) if not (cena_de[i][5].get("sem_rosto") or cena_de[i][5].get("fim"))]
+cores = np.zeros((N, 6))
+for i in com_pers:
     m = D[i]["mask"] > 0.6
     x0, y0, x1, y1 = [int(v) for v in D[i]["rosto"]]
     tronco = m.copy(); tronco[:max(0, y1)] = False  # camisa: abaixo da cabeça
     pele = m.copy(); pele[:max(0, y0)] = False; pele[max(0, y1):] = False
     c1 = V[i][tronco].mean(0) if tronco.any() else np.zeros(3)
     c2 = V[i][pele].mean(0) if pele.any() else np.zeros(3)
-    cores.append(np.r_[c1, c2])
-cores = np.array(cores); ref = np.median(cores, 0)
-d_cor = np.abs(cores - ref).max(1)
+    cores[i] = np.r_[c1, c2]
+d_cor = np.zeros(N); medianas = {}
+for nome in sorted({cena_de[i][0] for i in com_pers}):
+    idx = [i for i in com_pers if cena_de[i][0] == nome]
+    ref = np.median(cores[idx], 0); medianas[nome] = ref
+    d_cor[idx] = np.abs(cores[idx] - ref).max(1)  # dentro da cena
+camisas = np.array([v[:3] for v in medianas.values()]) if medianas else np.zeros((1, 3))
+entre = float(np.abs(camisas - np.median(camisas, 0)).max()) if len(camisas) > 1 else 0.0  # camisa cinza igual em todas
 area = np.array([d["mask"].mean() for d in D])
 salto = np.abs(np.r_[0, area[2:] - 2 * area[1:-1] + area[:-2], 0]) / (area + 1e-6)  # pico isolado = deformação/estouro (braço rápido chega a ~5,5%)
-res["2_integridade"] = {"desvio_cor_max": float(d_cor.max()), "salto_area_max_%": float(100 * salto.max()),
-                        "passou": bool(d_cor.max() < 40 and salto.max() < 0.08)}
+for c in R.CENAS:  # nos cortes a máscara muda de verdade
+    j = int(round((c[1] - a.de) * R.FPS))
+    salto[max(0, j - 2):j + 2] = 0
+salto[[i for i in range(N) if i not in com_pers]] = 0
+res["2_integridade"] = {"desvio_cor_na_cena_max": round(float(d_cor.max()), 1), "desvio_camisa_entre_cenas": round(entre, 1),
+                        "salto_area_max_%": round(float(100 * salto.max()), 2),
+                        "passou": bool(d_cor.max() < 40 and entre < 45 and salto.max() < 0.08)}
 piores["2_integridade"] = int(np.argmax(d_cor + 300 * salto))
 
 # ---------- 3. Áudio: sem clipping, sem estalos, sem dessincronia ----------
@@ -85,14 +97,18 @@ piores["4_forca_3d"] = int(np.argmin(cob))
 
 # ---------- 5. Sincronia: cada efeito a até ±0,2 s da palavra ----------
 sinc = []
-for nome, nome_k, t_pal in [("anéis chama azul", "chama azul", R.T_AZUL), ("check bem feito", "bem feito", R.palavra("bem"))]:
+EFEITOS = [("amarela", R.palavra("amarela")), ("falhando", R.palavra("Falhando")), ("acender", R.palavra("acender?")),
+           ("ramalho", R.palavra("Ramalho", 0)), ("conserto", R.palavra("Concerto")), ("regulagem", R.palavra("regulagem")),
+           ("limpeza", R.palavra("limpeza")), ("conversao", R.palavra("conversão")), ("instalacao", R.palavra("Instalação")),
+           ("industrial", R.palavra("industrial")), ("chama azul", R.T_AZUL), ("bem feito", R.palavra("bem")),
+           ("curitiba", R.palavra("Curitiba")), ("whatsapp", R.palavra("WhatsApp"))]
+for nome_k, t_pal in EFEITOS:
     if not (a.de <= t_pal <= a.ate):
         continue
-    # primeiro quadro em que a cobertura cresce perto da palavra
     ce = np.array([d["por_efeito"].get(nome_k, 0.0) for d in D])
-    idx = [i for i in range(N) if ce[i] > 0.002]
+    idx = [i for i in range(N) if ce[i] > 0.0005]  # primeiro quadro em que o efeito aparece
     t_ef = T[idx[0]] if idx else None
-    sinc.append({"efeito": nome, "palavra_s": round(t_pal, 3), "efeito_s": t_ef,
+    sinc.append({"efeito": nome_k, "palavra_s": round(t_pal, 3), "efeito_s": None if t_ef is None else round(t_ef, 3),
                  "erro_s": None if t_ef is None else round(t_ef - t_pal, 3)})
 res["5_sincronia"] = {"efeitos": sinc, "passou": all(s["erro_s"] is not None and abs(s["erro_s"]) <= 0.2 for s in sinc)}
 

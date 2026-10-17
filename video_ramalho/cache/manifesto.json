@@ -212,6 +212,102 @@
       "arquivo": "analise_cena05.npz",
       "sha256": "bcd1ca61221a1c962cc179152338d85a74a3ef8f5705f67fe2b6d147b9e45c7c",
       "criado": "2026-10-17 17:51:14"
+    },
+    "clipe_cena01": {
+      "chave": "17cfb1bffb917e90",
+      "params": {
+        "modelo": "kling-omni-video",
+        "aspect": "9:16",
+        "dur": 5,
+        "node": "jKOYnXL2j51mVVTUJxn4",
+        "referencia": null
+      },
+      "seed": null,
+      "arquivo": "clipes/cena01.mp4",
+      "sha256": "c7d1851c76820769e0844ab165a29c1d84f1fb98ef5b4223c38bb78e3c66d122",
+      "criado": "2026-10-17 18:16:41",
+      "generation_id": "DbuboL1VOj2pUbSI9bM6",
+      "creditos": 3393
+    },
+    "clipe_cena02": {
+      "chave": "56e4904d24b36002",
+      "params": {
+        "modelo": "kling-omni-video",
+        "aspect": "9:16",
+        "dur": 5,
+        "node": "0WE7sCWJVgtisAgOWxr1",
+        "referencia": "WlT16fAfvlktCqC4NdTx"
+      },
+      "seed": null,
+      "arquivo": "clipes/cena02.mp4",
+      "sha256": "49bfb15496affc61affbb441933c59cb17492e16864a5577e56f27ddc269c5a8",
+      "criado": "2026-10-17 18:16:41",
+      "generation_id": "qlAwRfp9WAK4lLmhaD1Q",
+      "creditos": 3393
+    },
+    "clipe_cena03": {
+      "chave": "be43b2f128de9aac",
+      "params": {
+        "modelo": "kling-omni-video",
+        "aspect": "9:16",
+        "dur": 5,
+        "node": "zQ1ZIl78PfVLdteZcjen",
+        "referencia": "WlT16fAfvlktCqC4NdTx"
+      },
+      "seed": null,
+      "arquivo": "clipes/cena03.mp4",
+      "sha256": "9926e347cdab417e1ace2a3ecfa888116a11d54abce7ed83aedcb0fd0ea780ae",
+      "criado": "2026-10-17 18:16:41",
+      "generation_id": "JqxIAA6rEWHkyIAzJC8S",
+      "creditos": 3393
+    },
+    "clipe_cena04": {
+      "chave": "6c59f2fa7a4fc353",
+      "params": {
+        "modelo": "kling-omni-video",
+        "aspect": "9:16",
+        "dur": 5,
+        "node": "IekLUyDZBv1uDaVQDHTX",
+        "referencia": "WlT16fAfvlktCqC4NdTx"
+      },
+      "seed": null,
+      "arquivo": "clipes/cena04.mp4",
+      "sha256": "3f26466129031cdc64e49414fbb4af972a96d240d48ffd6c497e8b512dcb2713",
+      "criado": "2026-10-17 18:16:41",
+      "generation_id": "W9cjKC3019R1LUl1W6nW",
+      "creditos": 3393
+    },
+    "clipe_cena05": {
+      "chave": "1388af51688288bb",
+      "params": {
+        "modelo": "kling-omni-video",
+        "aspect": "9:16",
+        "dur": 5,
+        "node": "B0esinezSpbivicUGJrp",
+        "referencia": "WlT16fAfvlktCqC4NdTx"
+      },
+      "seed": null,
+      "arquivo": "clipes/cena05.mp4",
+      "sha256": "4467bac48df61b9fad56332de1a28cccc61f99d6c57aa2938344c0bae228e2a5",
+      "criado": "2026-10-17 18:16:41",
+      "generation_id": "RaVaQ0u9qvatWu4fKrJn",
+      "creditos": 3393
+    },
+    "clipe_cena06": {
+      "chave": "4cb42a858cb233b8",
+      "params": {
+        "modelo": "kling-omni-video",
+        "aspect": "9:16",
+        "dur": 5,
+        "node": "KH7RewUPMznpv4Y6HhZk",
+        "referencia": "WlT16fAfvlktCqC4NdTx"
+      },
+      "seed": null,
+      "arquivo": "clipes/cena06.mp4",
+      "sha256": "aa6a007be3c7918ca8bb779d79953933da7879a24ce0572242e5b52ee6a309f8",
+      "criado": "2026-10-17 18:16:41",
+      "generation_id": "Tb9O7Rmhm9ly1qT5BM3o",
+      "creditos": 3393
     }
   }
 }

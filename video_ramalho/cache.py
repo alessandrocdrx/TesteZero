@@ -9,7 +9,7 @@ Uso:
     hit = c.get("cena03", params)          # caminho do arquivo ou None
     c.put("cena03", params, "clipes/cena03.mp4", seed=123)
 """
-import hashlib, json, os, time
+import fcntl, hashlib, json, os, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DIR = os.path.join(HERE, "cache")
@@ -44,10 +44,17 @@ class Cache:
 
     def put(self, nome, params, arquivo, seed=None, **extra):
         path = os.path.join(DIR, arquivo)
+        with open(MANIFEST + ".lock", "w") as lk:  # vários processos de análise em paralelo: relê antes de gravar
+            fcntl.flock(lk, fcntl.LOCK_EX)
+            if os.path.exists(MANIFEST):
+                self.m = json.load(open(MANIFEST))
+            self._put(nome, params, arquivo, path, seed, extra)
+        return path
+
+    def _put(self, nome, params, arquivo, path, seed, extra):
         self.m["itens"][nome] = {"chave": chave(params), "params": params, "seed": seed, "arquivo": arquivo,
                                  "sha256": sha256(path), "criado": time.strftime("%Y-%m-%d %H:%M:%S"), **extra}
         self.salvar()
-        return path
 
     def salvar(self):
         json.dump(self.m, open(MANIFEST, "w"), indent=2, ensure_ascii=False)
