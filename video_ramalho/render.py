@@ -115,7 +115,7 @@ def efeitos(t, info):
         falha = 1.0 if math.sin(9.0 * t) > -0.55 else 0.45
         x = -60 + 250 * ease((t - t1) / 0.45)
         add(e3.juntar(*e3.chama_viva(t, (255, 190, 30), 1.0, seed=1)), e3.rot(0.1, 0.8 * t, 0.15 * math.sin(6 * t)),
-            x, 0.40 * AH, 0.8, 250 * k * falha * (0.9 + 0.1 * math.sin(23 * t)), True, "amarela")
+            x, 0.40 * AH, 0.8, 320 * k * falha * (0.9 + 0.1 * math.sin(23 * t)), True, "amarela")
     # 2. "falhando": faíscas (tetraedros) estouram do queimador e caem, em várias profundidades
     t2 = palavra("Falhando")
     for rajada in (0.0, 0.45):
@@ -188,7 +188,7 @@ def efeitos(t, info):
     if k > 0:
         u = t - t13 + 0.05; yt = min(fy1 + 150, 0.62 * AH)
         y = -80 + (yt + 80) * (u / 0.35) ** 2 if u < 0.35 else yt - 45 * abs(math.sin(9 * (u - 0.35))) * math.exp(-4 * (u - 0.35))
-        add(e3.pino(), e3.rot(0.1, 2.0 * u, 0), max(95, bx0 - 5), y, 0.9, 190 * k, False, "curitiba")
+        add(e3.pino(), e3.rot(0.1, 2.0 * u, 0), max(95, bx0 - 5), y, 0.9, 240 * k, False, "curitiba")
     # tela final: selo da Ramalho no alto
     k = env(t, CORTES[6] + 0.35, FIM - CORTES[6] + 1, ent=0.4)  # entra depois do desfoque (antes cobria o rosto)
     if k > 0:
