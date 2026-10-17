@@ -66,8 +66,15 @@ def cena_em(t):
     return CENAS[-1]
 
 
+# pedido do cliente: o cenário não pode se mexer sozinho. Sem órbita 3D, câmera na mão, zoom com a voz,
+# deslize lateral nem dolly: só o movimento do próprio clipe; o 3D fica nos objetos sincronizados.
+CENARIO_FIXO = True
+
+
 def dolly(t):
     """Dolly-zoom na troca de cena: o fundo encolhe e o personagem cresce ao mesmo tempo (0,4 s após o corte)."""
+    if CENARIO_FIXO:
+        return 1.0, 1.0
     for c in CORTES[1:-2]:
         u = t - c
         if 0 <= u < 0.4:
@@ -263,6 +270,8 @@ def profundidade(nome, pos, W, H):
 
 def orbita(t):
     """Câmera 3D por cena: arco lateral (de um lado ao outro) + avanço. Em px da análise (540) e fração de zoom."""
+    if CENARIO_FIXO:
+        return 0.0, 0.0, 0.0
     nome, ta, tb, _, _, op = cena_em(t)
     u = ease(min(1.0, max(0.0, (t - ta) / (tb - ta))))
     lado = -1 if CENAS.index(cena_em(t)) % 2 else 1  # alterna o sentido a cada corte
@@ -272,6 +281,8 @@ def orbita(t):
 
 def camera(t, plano):
     """Câmera virtual: plano da cena + zoom de respiração com a voz + leve câmera na mão + deslocamento p/ paralaxe."""
+    if CENARIO_FIXO:
+        return plano, 0.0, 0.0, 0.0
     zoom = plano * (1.0 + 0.025 * energia(t))
     sx = 3.0 * math.sin(1.7 * t) + 1.6 * math.sin(4.3 * t + 1)
     sy = 2.4 * math.sin(1.3 * t + 2) + 1.2 * math.sin(3.7 * t)

@@ -112,17 +112,17 @@ res["3_audio"] = {"pico_dBFS": round(float(pico_db), 2), "razao_estalo": round(e
                   "dur_video": round(dur_v, 3), "dessincronia_ms": lag_ms,
                   "passou": bool(pico_db < -1 and estalo < 8 and abs(dur_a - dur_v) <= 1 / R.FPS + 0.03 and abs(lag_ms) <= 20)}
 
-# ---------- 4. Força do 3D: em cada trecho de 0,5 s, objetos ≥ 1,5% da tela OU paralaxe ≥ 1,5% da largura ----------
+# ---------- 4. 3D: cenário parado (pedido do cliente) e objeto 3D ≥ 1,5% da tela em toda cena ----------
 cob = np.array([d["cobertura"] for d in D]); par = np.array([d["paralaxe"] for d in D])
+desloc = max(d["desloc_3d"] for d in D)  # quanto o cenário anda sozinho (0 = parado)
 janelas = []
-for j in range(0, N, 15):
-    sl = slice(j, min(N, j + 15))
-    a_obj = float(cob[sl].max()); a_par = float(np.abs(par[sl]).max()) / W  # separação fundo × personagem
-    janelas.append({"t": round(T[j], 2), "objetos_%": round(100 * a_obj, 2), "paralaxe_%": round(100 * a_par, 2),
-                    "ok": a_obj >= 0.015 or a_par >= 0.015})
-desloc = max(d["desloc_3d"] for d in D)  # câmera 3D forte demais entorta e duplica o cenário
-res["4_forca_3d"] = {"desloc_3d_max_%": round(100 * desloc, 2), "janelas": janelas,
-                     "passou": all(w["ok"] for w in janelas) and desloc <= 0.04}
+for c in R.CENAS:
+    idx = [i for i in range(N) if c[1] <= T[i] < c[2]]
+    if idx:
+        a_obj = float(cob[idx].max())
+        janelas.append({"cena": c[0], "t": round(c[1], 2), "objetos_%": round(100 * a_obj, 2), "ok": a_obj >= 0.015})
+res["4_forca_3d"] = {"cenario_desloc_max_%": round(100 * desloc, 3), "paralaxe_max_px": round(float(np.abs(par).max()), 2),
+                     "janelas": janelas, "passou": all(w["ok"] for w in janelas) and desloc <= 0.001}
 piores["4_forca_3d"] = int(np.argmin(cob))
 
 # ---------- 5. Sincronia: cada efeito a até ±0,2 s da palavra ----------
