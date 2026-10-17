@@ -33,6 +33,8 @@ res, piores = {}, {}
 D, cache_fr = [], {}
 for t in T:
     _, d = R.render_quadro(t, a.final, cache_fr, diag=True)
+    # só o necessário (25 s em 1080p com camadas float32 inteiras estoura a memória)
+    d["area"] = float(d["mask"].mean()); d["mask"] = d["mask"] > 0.6; d["cobertura"] = float(d["cobertura"].mean())
     D.append(d)
 
 # ---------- 2. Integridade do personagem (consistência na cena e entre cenas + deformação) ----------
@@ -40,7 +42,7 @@ cena_de = [R.cena_em(t) for t in T]
 com_pers = [i for i in range(N) if not (cena_de[i][5].get("sem_rosto") or cena_de[i][5].get("fim"))]
 cores = np.zeros((N, 6))
 for i in com_pers:
-    m = D[i]["mask"] > 0.6
+    m = D[i]["mask"]
     x0, y0, x1, y1 = [int(v) for v in D[i]["rosto"]]
     tronco = m.copy(); tronco[:max(0, y1)] = False  # camisa: abaixo da cabeça
     pele = m.copy(); pele[:max(0, y0)] = False; pele[max(0, y1):] = False
@@ -54,7 +56,7 @@ for nome in sorted({cena_de[i][0] for i in com_pers}):
     d_cor[idx] = np.abs(cores[idx] - ref).max(1)  # dentro da cena
 camisas = np.array([v[:3] for v in medianas.values()]) if medianas else np.zeros((1, 3))
 entre = float(np.abs(camisas - np.median(camisas, 0)).max()) if len(camisas) > 1 else 0.0  # camisa cinza igual em todas
-area = np.array([d["mask"].mean() for d in D])
+area = np.array([d["area"] for d in D])
 salto = np.abs(np.r_[0, area[2:] - 2 * area[1:-1] + area[:-2], 0]) / (area + 1e-6)  # pico isolado = deformação/estouro (braço rápido chega a ~5,5%)
 for c in R.CENAS:  # nos cortes a máscara muda de verdade
     j = int(round((c[1] - a.de) * R.FPS))
@@ -85,7 +87,7 @@ res["3_audio"] = {"pico_dBFS": round(float(pico_db), 2), "razao_estalo": round(e
                   "passou": bool(pico_db < -1 and estalo < 8 and abs(dur_a - dur_v) <= 1 / R.FPS + 0.03 and abs(lag_ms) <= 20)}
 
 # ---------- 4. Força do 3D: em cada trecho de 0,5 s, objetos ≥ 1,5% da tela OU paralaxe ≥ 1,5% da largura ----------
-cob = np.array([d["cobertura"].mean() for d in D]); par = np.array([d["paralaxe"] for d in D])
+cob = np.array([d["cobertura"] for d in D]); par = np.array([d["paralaxe"] for d in D])
 janelas = []
 for j in range(0, N, 15):
     sl = slice(j, min(N, j + 15))
@@ -114,25 +116,35 @@ res["5_sincronia"] = {"efeitos": sinc, "passou": all(s["erro_s"] is not None and
 
 # ---------- 6. Legendas e @: safe zone, fora do rosto, contraste ----------
 ass = os.path.join(OUT, "legendas.ass")
-raw = subprocess.run(["ffmpeg", "-v", "error", "-f", "lavfi", "-i", f"color=c=black@0:s={W}x{H}:r={R.FPS},format=rgba",
-                      "-vf", f"trim=start={a.de}:end={a.ate},setpts=PTS-STARTPTS,ass={ass}", "-f", "rawvideo", "-pix_fmt", "rgba", "-"],
-                     capture_output=True, check=True).stdout
-L = np.frombuffer(raw, np.uint8).reshape(-1, H, W, 4)[:N, ..., 3] > 20
+pl = subprocess.Popen(["ffmpeg", "-v", "error", "-f", "lavfi", "-i", f"color=c=black@0:s={W}x{H}:r={R.FPS},format=rgba",
+                       "-vf", f"trim=start={a.de}:end={a.ate},setpts=PTS-STARTPTS,ass={ass},alphaextract", "-f", "rawvideo", "-pix_fmt", "gray", "-"],
+                      stdout=subprocess.PIPE)
+
+
+def legenda_quadros():  # um quadro por vez (alfa das legendas; o fundo é transparente)
+    for _ in range(N):
+        b = pl.stdout.read(W * H)
+        if len(b) < W * H:
+            return
+        yield np.frombuffer(b, np.uint8).reshape(H, W) > 20
+
+
 safe = dict(topo=250 * k, base=H - 420 * k, esq=60 * k, dir=W - 150 * k)
 fora, sobre_rosto = 0, 0
 pior6, pv = 0, -1
-for i in range(len(L)):
-    ys, xs = np.nonzero(L[i])
+for i, Li in enumerate(legenda_quadros()):
+    ys, xs = np.nonzero(Li)
     if not len(ys):
         continue
     v = 0
     if ys.min() < safe["topo"] or ys.max() > safe["base"] or xs.min() < safe["esq"] or xs.max() > safe["dir"]:
         fora += 1; v += 1
     x0, y0, x1, y1 = [int(q) for q in D[i]["rosto"]]
-    if L[i][max(0, y0):max(0, y1), max(0, x0):max(0, x1)].any():
+    if Li[max(0, y0):max(0, y1), max(0, x0):max(0, x1)].any():
         sobre_rosto += 1; v += 1
     if v > pv:
         pv, pior6 = v, i
+pl.wait()
 lum = lambda c: 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
 lin = lambda c: [((x / 255) / 12.92 if x / 255 <= 0.04045 else (((x / 255) + 0.055) / 1.055) ** 2.4) for x in c]
 contraste = (lum(lin((255, 200, 48))) + 0.05) / (lum(lin((10, 26, 48))) + 0.05)  # amarelo × contorno escuro
