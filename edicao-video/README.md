@@ -29,6 +29,20 @@ Shishkin, em `cenarios/`). No sorriso final, o sonho acaba e ela volta para o qu
 - No clímax só de voz, um único push contínuo de 14 s, do plano aberto ao close.
 - O quadro respira com a voz dela, e as legendas sobem para o lugar.
 
+**Sem cara de chroma key:** não há recorte duro. Perto dela, o quarto real continua: o cabelo fica sempre sobre o
+fundo verdadeiro, mas a parede pega a cor e a luz locais da pintura (razão das médias locais), e a pintura
+assume o fundo a uma distância irregular, pictórica (`HALO`).
+
+**Primeiro plano ligado à letra (`frente.py`):** os elementos perto da lente são desfocados (profundidade de campo).
+| Verso | Na frente dela |
+|---|---|
+| "vento" | folhas e sementes sopradas pela lente, as maiores na rajada de "ветра" |
+| "livres" | pássaros grandes passam rente à câmera em "свободно", penas caindo |
+| "o sol brilha… de luz" | lens flare anamórfico saindo do sol pintado, pico em "солнце" e "светом" |
+| "as rosas se abrem" | pétalas grandes desfocadas caem na frente da lente, chuva em "розы" |
+| "rouxinóis… matas verdes" | olhamos por entre galhos; vaga-lumes e dois rouxinóis passam |
+| só a voz, sob a lua | névoa do rio rola na frente dela e brilha com a voz |
+
 Técnica: ela é recortada quadro a quadro com o MediaPipe (segmentação multiclasse + máscara fixa do
 microfone), a borda é refinada com filtro guiado, e os fios de cabelo são descontaminados. O fundo do
 quarto visto através deles é estimado localmente e trocado pela pintura. Onde ela é sólida, o pixel

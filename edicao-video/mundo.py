@@ -14,6 +14,7 @@ from mediapipe.tasks.python import BaseOptions, vision
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import calmo as C  # noqa: E402
 import efeitos as E  # noqa: E402
+import frente as F  # noqa: E402
 from calmo import W, H, FPS, smooth, fade  # noqa: E402
 
 # scene: painting, start, end, pan (source x centre from -> to), zoom (from -> to), light grade
@@ -56,6 +57,7 @@ SHOTS = [
     (78.0, 1.12, 1.16, "M"),
     (82.4, 1.08, 1.02, "W"),   # back home, the camera settles
 ]
+HALO = (4, 16, 70)     # room kept around her (source px): base reach, painterly variation, feather
 PARALLAX = 1.8   # the painting moves 1.8x the camera: depth behind her
 
 
@@ -173,7 +175,7 @@ def face_mask(face, M, i):
     """1 where effects may appear, 0 on her face and hair, following the camera"""
     cx, cy = face.at(i)
     z = float(M[0, 0])
-    cx, cy, r = z * cx + M[0, 2], z * cy + M[1, 2], face.r * z
+    cx, cy, r = z * cx + M[0, 2], z * cy + M[1, 2], face.r * z * 0.75
     d = np.sqrt(((face.xx - cx) / (r * 0.95)) ** 2 + ((face.yy - cy - r * 0.15) / (r * 1.2)) ** 2)
     return cv2.resize(np.clip((d - 1.0) / 0.35, 0, 1), (W, H), interpolation=cv2.INTER_LINEAR)
 
@@ -189,6 +191,8 @@ def main(src_path, npz, bg_dir, model, out_path):
     n = len(frames)
     paintings = {s[0]: Painting(os.path.join(bg_dir, s[0] + ".png")) for s in SCENES if s[0] != "room"}
     noises = [noise_field(10 + k) for k in range(len(SCENES))]
+    halo_noise = cv2.resize(noise_field(99, scale=11), (720, 1280), interpolation=cv2.INTER_AREA)
+    fore = F.Foreground()
     matte = Matte(model)
     face = E.Face(npz)
     motes, birds, petals_back, petals_front, glints, embers = (
@@ -300,7 +304,27 @@ def main(src_path, npz, bg_dir, model, out_path):
         al = alpha[..., None]
         edge = np.clip(alpha * (1 - alpha) * 4, 0, 1)
         wrap = cv2.GaussianBlur(bgf, (0, 0), 14) * (edge[..., None] * (0.35 + 0.1 * rush))  # the flash rims her
-        img = np.clip(fg + (1 - al) * bgf + wrap * (1 - al * 0.5), 0, 255)
+        world = fg + (1 - al) * bgf + wrap * (1 - al * 0.5)
+        # no hard key: around her the real room stays, and the painting takes over at a painterly distance.
+        # her hair always sits on its true background, so there is no cut-out edge to see
+        hard = (alpha_src > 0.5).astype(np.uint8)
+        dist = cv2.distanceTransform(1 - hard, cv2.DIST_L2, 5)
+        reach = HALO[0] + HALO[1] * halo_noise
+        keep = 1 - np.clip((dist - reach) / HALO[2], 0, 1)
+        keep = cv2.warpAffine(keep * keep * (3 - 2 * keep), Mh_src, (W, H), flags=cv2.INTER_LINEAR,
+                              borderMode=cv2.BORDER_REPLICATE)[..., None]
+        real = cv2.warpAffine(src, Mh_src, (W, H), flags=cv2.INTER_LANCZOS4,
+                              borderMode=cv2.BORDER_REPLICATE).astype(np.float32)
+        # the wall seen around and through her hair takes on the painting's local colour and light (ratio of local
+        # means), keeping its own texture; where she is solid (a=1) nothing changes
+        q = (W // 4, H // 4)
+        wq = cv2.resize((1 - alpha) ** 4, q, interpolation=cv2.INTER_AREA)
+        den = cv2.GaussianBlur(wq, (0, 0), 10)[..., None] + 1e-4
+        wall = cv2.GaussianBlur(cv2.resize(real, q, interpolation=cv2.INTER_AREA) * wq[..., None], (0, 0), 10) / den
+        paint = cv2.GaussianBlur(cv2.resize(bgf, q, interpolation=cv2.INTER_AREA) * wq[..., None], (0, 0), 10) / den
+        ratio = cv2.resize(np.clip((paint + 8) / (wall + 8), 0.25, 4), (W, H), interpolation=cv2.INTER_LINEAR)
+        real = real * (1 + (1 - al) * (ratio - 1))
+        img = np.clip(real * keep + world * (1 - keep), 0, 255)
 
         k_turn = smooth((t - C.TURN[0]) / 2.0) if C.TURN[0] <= t < C.TURN[1] else 0.0
         cap_a = max((fade(t, a, b, fin=0.35, fout=0.4) for a, b, _, _ in C.LYRICS), default=0.0)
@@ -314,12 +338,13 @@ def main(src_path, npz, bg_dir, model, out_path):
         wind = max(E.env_at(a, b, t) for a, b in E.WIND)
         if wind > 0:
             gust = max(math.exp(-((t - g) / 0.8) ** 2) for g in E.GUSTS)
-            motes.draw(front, t, wind, e, gust)
+            motes.draw(front, t, wind * 0.6, e, gust)
         if (a := E.env_at(*E.EMBERS, t, 1.5, 1.0)) > 0:
             embers.draw(front, t, a * 1.2, e)
         if front.any():
             Fl = cv2.GaussianBlur(cv2.resize(front, (W, H), interpolation=cv2.INTER_LINEAR), (0, 0), 1.4) * mask[..., None]
             img = 255 - (255 - img) * (255 - np.clip(Fl, 0, 255)) / 255
+        img = F.Foreground.composite(img, fore.render(t, e, sm), mask, W, H)
         img = np.clip(img, 0, 255).astype(np.uint8)
         if (a := E.env_at(*E.ROSES, t, 0.8, 1.6)) > 0:
             petals_front.draw(img, t, a, mask, sm)
