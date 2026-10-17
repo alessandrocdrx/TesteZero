@@ -1,6 +1,9 @@
 """'Voa nas asas do vento': her room dissolves into 19th-century Russian paintings that follow the song.
 She is cut out frame by frame (MediaPipe) and stays untouched; the voice is copied bit for bit.
-Usage: mundo.py SRC ANALISE.npz BG_DIR SEG_MODEL OUT_SILENT_MP4    (PREVIEW="2,20,36" for review frames)"""
+Usage: mundo.py SRC ANALISE.npz BG_DIR SEG_MODEL OUT_SILENT_MP4
+  PREVIEW="2,20,36"   review frames instead of the video
+  CLIP="50,60"        render only that stretch (seconds), to check motion quickly
+  MATTE_CACHE=dir     her cut-out, precomputed once by recorte.py (much faster re-renders)"""
 import math
 import os
 import subprocess
@@ -272,7 +275,15 @@ def main(src_path, npz, bg_dir, model, out_path):
     cv2.rectangle(clutter, (600, 0), (720, 260), 1.0, -1)
     clutter = cv2.GaussianBlur(clutter, (0, 0), 25)
     marks = Watermarks()
-    matte = Matte(model)
+    cache = os.environ.get("MATTE_CACHE")
+    live = Matte(model)
+
+    def matte(frame, ts_ms, i):
+        if cache:
+            a = cv2.imread(os.path.join(cache, f"{i:05d}.png"), cv2.IMREAD_GRAYSCALE)
+            if a is not None:
+                return a.astype(np.float32) / 255
+        return live(frame, ts_ms)
     face = E.Face(npz)
     motes, birds, petals_back, petals_front, glints, embers = (
         E.Motes(), E.Birds(), E.Petals(seed=9), E.Petals(n=18, seed=31), E.Glints(), E.Embers())
@@ -300,6 +311,8 @@ def main(src_path, npz, bg_dir, model, out_path):
 
     preview = [float(x) for x in os.environ.get("PREVIEW", "").split(",") if x]
     want = {int(round(x * FPS)) for x in preview}
+    clip = [float(x) for x in os.environ.get("CLIP", "").split(",") if x]
+    first, last = (int(clip[0] * FPS), int(clip[1] * FPS)) if clip else (0, int(C.DUR * FPS))
     enc = None if preview else subprocess.Popen([
         "ffmpeg", "-loglevel", "error", "-y", "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{W}x{H}",
         "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "slow", "-crf", "17", "-tune", "film",
@@ -308,9 +321,9 @@ def main(src_path, npz, bg_dir, model, out_path):
     for i in range(int(C.DUR * FPS)):
         t = i / FPS
         src = frames[min(i, n - 1)]
-        if preview and i not in want:
-            if any(abs(i - w) <= 6 for w in want):  # warm the matte's temporal state
-                matte(src, int(t * 1000))
+        if (preview and i not in want) or not (first <= i < last):
+            if not cache and (any(abs(i - w) <= 6 for w in want) or first - 6 <= i < first):
+                matte(src, int(t * 1000), min(i, n - 1))   # warm the live matte's temporal state
             if E.EMBERS[0] <= t < E.EMBERS[1]:
                 embers.draw(np.zeros((E.SH, E.SW, 3), np.float32), t, 0, face.e(t))
             continue
@@ -319,7 +332,7 @@ def main(src_path, npz, bg_dir, model, out_path):
         Mh, Mb, (qx, qy) = camera(t, fx, fy, e)
         Mh_src = Mh.copy()
         Mh_src[:, :2] *= W / src.shape[1]   # her layer is warped once, straight from the 720p source
-        alpha_src = matte(src, int(t * 1000))
+        alpha_src = matte(src, int(t * 1000), min(i, n - 1))
 
         # ---- the world behind her: each painting moves with the parallax camera; changes are dolly-zoom rushes ----
         bg, rush = None, 0.0

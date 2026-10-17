@@ -33,6 +33,8 @@ ffmpeg -loglevel error -y -i saida/efeitos_sem_audio.mp4 -i entrada/v.mp4 -map 0
 echo "Pronto: saida/voa_nas_asas_efeitos.mp4"
 
 # Versão "mundo": o quarto dela vira pinturas russas do século XIX que seguem a letra
-python3 mundo.py entrada/v.mp4 entrada/analise.npz cenarios modelos/selfie_multiclass.tflite saida/mundo_sem_audio.mp4
+# o recorte dela é calculado uma vez e reaproveitado em toda renderização seguinte
+[ -d entrada/recorte ] || python3 recorte.py entrada/v.mp4 modelos/selfie_multiclass.tflite entrada/recorte
+MATTE_CACHE=entrada/recorte python3 mundo.py entrada/v.mp4 entrada/analise.npz cenarios modelos/selfie_multiclass.tflite saida/mundo_sem_audio.mp4
 ffmpeg -loglevel error -y -i saida/mundo_sem_audio.mp4 -i entrada/v.mp4 -map 0:v -map 1:a -c copy -movflags +faststart saida/voa_nas_asas_mundo.mp4
 echo "Pronto: saida/voa_nas_asas_mundo.mp4"

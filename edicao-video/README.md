@@ -86,6 +86,14 @@ e o áudio é copiado bit a bit. Toda a edição é enquadramento, cortes e cama
 
 ## Como rodar
 
+Ciclo rápido de revisão da versão "mundo": prancha de quadros, depois um trecho curto, e o vídeo inteiro só no fim.
+```bash
+python3 recorte.py entrada/v.mp4 modelos/selfie_multiclass.tflite entrada/recorte     # uma vez só
+export MATTE_CACHE=entrada/recorte
+PREVIEW="5.6,18.9,36,51,58,70" python3 mundo.py entrada/v.mp4 entrada/analise.npz cenarios modelos/selfie_multiclass.tflite previa
+CLIP="48,58" python3 mundo.py entrada/v.mp4 entrada/analise.npz cenarios modelos/selfie_multiclass.tflite trecho.mp4
+```
+
 ```bash
 ./preparar.sh "https://www.tiktok.com/@kvashenayakto/video/7562654671328890124"
 ./renderizar.sh          # gera saida/reel.mp4 (85 s), saida/story.mp4 (15 s) e saida/tiktok_viral.mp4 (~40 s)
