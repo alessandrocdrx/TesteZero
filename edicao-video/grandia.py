@@ -183,7 +183,8 @@ def shot(paint, clips, k, name, cam, lo, hi, t, shake):
     """the animated clip when there is one (its own camera already flies in 3D: only a small push and the
     shake are added), else the painting under the virtual 3D camera"""
     if name in clips:
-        f = clips[name].at(t - lo)
+        c = clips[name]
+        f = c.at((t - lo) * min(1.0, (c.n - 1) / c.fps / (hi - lo)))   # a short clip is slowed to fit
         z = 1.0 + 0.04 * (t - lo) / (hi - lo)
         M = cv2.getRotationMatrix2D((W / 2, H / 2), 0, z)
         M[:, 2] += shake
