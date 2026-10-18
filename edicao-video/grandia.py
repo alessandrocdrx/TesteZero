@@ -2,7 +2,7 @@
 Seven anime scenes (AI images, one heroine kept consistent by a reference), an AI-sung hymn in
 Portuguese. The camera moves through each painting in 3D, white feathers and gold dust fly in depth,
 a magic circle lights under her on every 'Glória', and the lyrics appear word by word on the beat.
-Builds on poder.py. Usage: grandia.py CENAS_DIR HINO.mp3 OUT.mp4     (PREVIEW="18.6,40.3" for frames)"""
+Builds on poder.py. Usage: [CLIPES=dir with v1..v7.mp4] grandia.py CENAS_DIR HINO.mp3 OUT.mp4     (PREVIEW="18.6,40.3" for frames)"""
 import math
 import os
 import subprocess
@@ -155,9 +155,48 @@ def title_sprite():
     return a, cv2.GaussianBlur(a, (0, 0), 22)
 
 
+class Clip:
+    """an animated shot (image-to-video): frames are read forward only, picked by time, scaled to cover 9:16"""
+    def __init__(self, path):
+        self.cap = cv2.VideoCapture(path)
+        self.fps = self.cap.get(cv2.CAP_PROP_FPS) or 24
+        self.n = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        self.idx, self.cur = -1, None
+
+    def at(self, tl):
+        want = min(max(int(tl * self.fps), 0), self.n - 1)
+        while self.idx < want:
+            ok, f = self.cap.read()
+            if not ok:
+                break
+            self.idx, self.cur = self.idx + 1, f
+        f = self.cur
+        s = max(W / f.shape[1], H / f.shape[0])
+        if abs(s - 1) > 1e-3 or f.shape[:2] != (H, W):
+            f = cv2.resize(f, None, fx=s, fy=s, interpolation=cv2.INTER_LANCZOS4 if s > 1 else cv2.INTER_AREA)
+            y0, x0 = (f.shape[0] - H) // 2, (f.shape[1] - W) // 2
+            f = f[y0:y0 + H, x0:x0 + W]
+        return f
+
+
+def shot(paint, clips, k, name, cam, lo, hi, t, shake):
+    """the animated clip when there is one (its own camera already flies in 3D: only a small push and the
+    shake are added), else the painting under the virtual 3D camera"""
+    if name in clips:
+        f = clips[name].at(t - lo)
+        z = 1.0 + 0.04 * (t - lo) / (hi - lo)
+        M = cv2.getRotationMatrix2D((W / 2, H / 2), 0, z)
+        M[:, 2] += shake
+        return cv2.warpAffine(f, M, (W, H), borderMode=cv2.BORDER_REFLECT)
+    return P.scene_frame(paint[name], cam, (t - lo) / (hi - lo), t, shake)
+
+
 def main(cenas, hino, out):
     preview = [float(x) for x in os.environ.get("PREVIEW", "").split(",") if x]
     paint = {s[0]: P.Painting(os.path.join(cenas, s[0] + ".png")) for s in SCENES}
+    cdir = os.environ.get("CLIPES", "")
+    clips = {s[0]: Clip(os.path.join(cdir, "v" + s[0][1:] + ".mp4")) for s in SCENES
+             if cdir and os.path.exists(os.path.join(cdir, "v" + s[0][1:] + ".mp4"))}
     dust, feathers = P.Dust(n=360, seed=9), Feathers()
     caps = P.Captions(HYMN, LINE_END, KEYS, 0.0)
     rise = P.Embers(260, 11)
@@ -190,7 +229,7 @@ def main(cenas, hino, out):
             lo, hi = a - (XFADE / 2 if k else 0), b + (XFADE / 2 if k < len(SCENES) - 1 else 0)
             if not (lo <= t < hi):
                 continue
-            fr = P.scene_frame(paint[name], cam, (t - lo) / (hi - lo), t, shake).astype(np.float32) / 255
+            fr = shot(paint, clips, k, name, cam, lo, hi, t, shake).astype(np.float32) / 255
             w_in = smooth((t - lo) / XFADE) if k else 1.0
             w_out = 1 - smooth((t - (hi - XFADE)) / XFADE) if k < len(SCENES) - 1 else 1.0
             img = fr * min(w_in, w_out) if img is None else img + fr * min(w_in, w_out)
