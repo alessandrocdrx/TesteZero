@@ -224,17 +224,18 @@ def lightning(seed, sw, sh):
 # ---------- captions ----------
 class Captions:
     """each line is laid out once; words fade and rise in on their own syllable, the spoken word turns gold"""
-    def __init__(self):
+    def __init__(self, poem=POEM, line_end=LINE_END, keys=KEYS, offset=VOICE_AT):
+        self.poem, self.line_end, self.offset = poem, [e + offset for e in line_end], offset
         self.f = font(ITALIC, 84, b"SemiBold Italic")
         self.fk = font(ITALIC, 104, b"Bold Italic")
         self.lines = []
         d0 = ImageDraw.Draw(Image.new("RGBA", (4, 4)))
-        maxw, space = 860, 22
-        for words in POEM:
+        maxw, space = 860, 28
+        for words in poem:
             items, rows, row, rw = [], [], [], 0
             for wtxt, at in words:
-                ff = self.fk if wtxt in KEYS else self.f
-                ww = d0.textlength(wtxt, font=ff)
+                ff = self.fk if wtxt in keys else self.f
+                ww = d0.textlength(wtxt, font=ff) + (16 if wtxt in keys else 0)   # room for the italic overhang
                 if row and rw + space + ww > maxw:
                     rows.append((row, rw))
                     row, rw = [], 0
@@ -246,7 +247,7 @@ class Captions:
             for ri, (row, rw) in enumerate(rows):
                 x = -rw / 2
                 for wtxt, at, ff, ww in row:
-                    items.append((self.sprite(wtxt, ff), x + ww / 2, y0 + ri * lh, v(at), wtxt in KEYS))
+                    items.append((self.sprite(wtxt, ff), x + ww / 2, y0 + ri * lh, at + offset, wtxt in keys))
                     x += ww + space
             self.lines.append(items)
 
@@ -263,11 +264,11 @@ class Captions:
 
     def draw(self, img, t, cx=W / 2 - 40, cy=1330):
         for li, items in enumerate(self.lines):
-            start, end = v(POEM[li][0][1]) - 0.15, v(LINE_END[li]) + 0.35
+            start, end = items[0][3] - 0.15, self.line_end[li] + 0.35
             if not (start <= t < end + 0.3):
                 continue
             out = 1 - smooth((t - end) / 0.3)
-            nxt = [it[3] for it in items[1:]] + [v(LINE_END[li])]
+            nxt = [it[3] for it in items[1:]] + [self.line_end[li]]
             for (spr, x, y, at, key), until in zip(items, nxt):
                 a_in = smooth((t - at + 0.12) / 0.28)
                 if a_in <= 0:
