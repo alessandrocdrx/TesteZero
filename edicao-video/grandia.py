@@ -223,7 +223,7 @@ def main(cenas, hino, out):
             ring = np.exp(-((np.sqrt((gx2 - sw / 2) ** 2 + (gy2 - sh * 0.38) ** 2) - (t - 33.1) * 520) / 14) ** 2)
             add(ring.astype(np.float32), [255, 225, 210], 0.6 * p_br)
         add(radial(sw * 0.5, sh * 0.4, 220, gx2, gy2), GOLD, 0.5 * pulse(t, 34.1, 0.2, 1.4))   # graça
-        sun = p_alv + p_ser + p_poder + 0.4 * smooth((t - 38) / 2) * (1 - smooth((t - 46.4) / 1))
+        sun = 0.7 * (p_alv + p_ser + p_poder)
         if sun > 0.01:
             add(radial(sw * 0.62, sh * 0.15, 230, gx2, gy2), GOLD, 0.45 * sun)
             add(rays(sw * 0.62, sh * 0.15, t, gx2, gy2, 16), GOLD, 0.3 * sun)
@@ -236,7 +236,7 @@ def main(cenas, hino, out):
         L = cv2.GaussianBlur(L, (0, 0), 1.5)
         img = 1 - (1 - np.clip(img, 0, 1)) * (1 - np.clip(cv2.resize(L, (W, H)), 0, 1))   # screen
         # depth layers: gold dust, then feathers that pass in front of everything
-        D = dust.draw(t, 0.16 + 0.5 * (p_glo + p_alv + p_ser), 0.45 + 0.35 * smooth((t - 18) / 3) + 0.4 * p_ale,
+        D = dust.draw(t, 0.16 + 0.5 * (p_glo + p_alv + p_ser), 0.45 + 0.3 * smooth((t - 18) / 3) - 0.25 * smooth((t - 38) / 1) * (1 - smooth((t - 46.8) / 1)) + 0.4 * p_ale,
                       max(p_ser, p_poder) * 0.6)
         if D is not None:
             img = 1 - (1 - img) * (1 - np.clip(D, 0, 1))
