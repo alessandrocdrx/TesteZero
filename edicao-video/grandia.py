@@ -165,6 +165,9 @@ class Clip:
 
     def at(self, tl):
         want = min(max(int(tl * self.fps), 0), self.n - 1)
+        if want < self.idx or want > self.idx + 48:          # a chunk starting mid-clip seeks instead of decoding all
+            self.cap.set(cv2.CAP_PROP_POS_FRAMES, want)
+            self.idx = want - 1
         while self.idx < want:
             ok, f = self.cap.read()
             if not ok:
@@ -194,10 +197,10 @@ def shot(paint, clips, k, name, cam, lo, hi, t, shake):
 
 def main(cenas, hino, out):
     preview = [float(x) for x in os.environ.get("PREVIEW", "").split(",") if x]
-    paint = {s[0]: P.Painting(os.path.join(cenas, s[0] + ".png")) for s in SCENES}
     cdir = os.environ.get("CLIPES", "")
     clips = {s[0]: Clip(os.path.join(cdir, "v" + s[0][1:] + ".mp4")) for s in SCENES
              if cdir and os.path.exists(os.path.join(cdir, "v" + s[0][1:] + ".mp4"))}
+    paint = {s[0]: P.Painting(os.path.join(cenas, s[0] + ".png")) for s in SCENES if s[0] not in clips}
     dust, feathers = P.Dust(n=360, seed=9), Feathers()
     caps = P.Captions(HYMN, LINE_END, KEYS, 0.0)
     rise = P.Embers(260, 11)
@@ -206,13 +209,15 @@ def main(cenas, hino, out):
     sw, sh = W // 2, H // 2
     gy2, gx2 = np.mgrid[0:sh, 0:sw].astype(np.float32)
     gyf = (np.mgrid[0:H, 0:1][0].astype(np.float32) / H)[..., None]
-    grain_r = np.random.default_rng(1)
+    grain = P.grain_bank(sigma=0.014)
     tmp = out + ".video.mp4"
     enc = None if preview else subprocess.Popen([
         "ffmpeg", "-loglevel", "error", "-y", "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{W}x{H}",
         "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "slow", "-crf", "17", "-pix_fmt", "yuv420p",
         tmp], stdin=subprocess.PIPE)
-    frames = [int(round(p * FPS)) for p in preview] if preview else range(int(DUR * FPS))
+    clip = [float(x) for x in os.environ.get("CLIP", "").split(",") if x]      # a chunk: "start,end" seconds
+    first, last = (round(clip[0] * FPS), round(clip[1] * FPS)) if clip else (0, int(DUR * FPS))
+    frames = [int(round(p * FPS)) for p in preview] if preview else range(first, last)
     for i in frames:
         t = i / FPS
         p_cresci = pulse(t, 11.9, 0.1, 0.5)
@@ -241,7 +246,8 @@ def main(cenas, hino, out):
         L = np.zeros((sh, sw, 3), np.float32)
 
         def add(mask, col, k):
-            L[:] += mask[..., None] * (np.array(col, np.float32) / 255) * k
+            if k > 0.004:                               # most lights are off on most frames
+                L[:] += mask[..., None] * (np.array(col, np.float32) / 255) * k
         # the opening spark in her hand, the breath of 'sopro'
         add(radial(sw * 0.5, sh * 0.42, 60 + 120 * pulse(t, 3.9, 0.1, 0.8), gx2, gy2), GOLD, 0.9 * pulse(t, 3.9, 0.1, 0.8))
         add(radial(sw * 0.5, sh * 0.35, 200, gx2, gy2), [255, 240, 230], 0.5 * pulse(t, 14.1, 0.3, 1.2))
@@ -274,12 +280,12 @@ def main(cenas, hino, out):
         rise.draw(L, t, 46.4, sw * 0.5, sh * 0.6, 280, 1.3)
         rise.draw(L, t, 55.5, sw * 0.5, sh * 0.55, 360, 1.2)
         L = cv2.GaussianBlur(L, (0, 0), 1.5)
-        img = 1 - (1 - np.clip(img, 0, 1)) * (1 - np.clip(cv2.resize(L, (W, H)), 0, 1))   # screen
+        img = P.screen(img, cv2.resize(L, (W, H)))
         # depth layers: gold dust, then feathers that pass in front of everything
         D = dust.draw(t, 0.16 + 0.5 * (p_glo + p_alv + p_ser), 0.45 + 0.3 * smooth((t - 18) / 3) - 0.25 * smooth((t - 38) / 1) * (1 - smooth((t - 46.8) / 1)) + 0.4 * p_ale,
                       max(p_ser, p_poder) * 0.6)
         if D is not None:
-            img = 1 - (1 - img) * (1 - np.clip(D, 0, 1))
+            img = P.screen(img, D)
         gust = p_alv * 0.8 + p_ser * 0.6 + p_glo * 0.3
         fa = 0.5 + 0.5 * smooth((t - 18) / 2) + 0.4 * (p_alv + p_ser)
         Fr = feathers.draw(t, fa, gust)
@@ -315,8 +321,8 @@ def main(cenas, hino, out):
         roi += hg[..., None] * GOLD / 255 * 0.35 * hk
         roi[:] = roi * (1 - ha[..., None] * hk) + CREAM / 255 * ha[..., None] * hk
         img *= 1 - smooth((t - (DUR - 0.6)) / 0.6)
-        img += grain_r.normal(0, 0.014, (H // 2, W // 2, 1)).astype(np.float32).repeat(2, 0).repeat(2, 1)
-        frame = (np.clip(img, 0, 1) * 255).astype(np.uint8)
+        img += grain[i % len(grain)]
+        frame = P.to_u8(img)
         if preview:
             cv2.imwrite(f"{out}_{t:05.1f}.png", frame)
             continue
@@ -327,6 +333,9 @@ def main(cenas, hino, out):
         return
     enc.stdin.close()
     enc.wait()
+    if clip:                                   # chunks are joined and get the sound in grandia_paralelo.sh
+        os.replace(tmp, out)
+        return
     subprocess.run([
         "ffmpeg", "-loglevel", "error", "-y", "-i", tmp, "-i", hino, "-filter_complex",
         f"[1:a]atrim=0:{DUR},afade=t=out:st={DUR - 1.2}:d=1.2,loudnorm=I=-14:TP=-1.5:LRA=11[a]",

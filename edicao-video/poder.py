@@ -193,10 +193,6 @@ class Embers:
 
 
 # ---------- light: blooms, rays, lightning ----------
-def radial(cx, cy, r, gx, gy):
-    return np.exp(-((gx - cx) ** 2 + (gy - cy) ** 2) / (2 * r * r)).astype(np.float32)
-
-
 def rays(cx, cy, t, gx, gy, n=14):
     a = np.arctan2(gy - cy, gx - cx)
     d = np.sqrt((gx - cx) ** 2 + (gy - cy) ** 2)
@@ -323,13 +319,58 @@ def handle_sprite():
 
 
 # ---------- grade: one palette for seven paintings ----------
+_SHADOW = np.array([0.05, 0.015, -0.01], np.float32)
+_HIGH = np.array([-0.03, 0.01, 0.04], np.float32)
+_VIG = {}
+
+
 def grade(img, gy):
-    lum = img.mean(2, keepdims=True)
-    shadows = np.clip(1 - lum * 2.2, 0, 1)
-    highs = np.clip(lum * 1.8 - 0.8, 0, 1)
-    img = img + shadows * np.array([0.05, 0.015, -0.01]) + highs * np.array([-0.03, 0.01, 0.04])
-    vig = 1 - 0.38 * np.clip(((gy - 0.47) * 1.3) ** 2 + 0.0, 0, 1)
-    return img * vig
+    """one palette for every scene: cool shadows, warm highs, vignette. float32 and OpenCV throughout (a float64
+    constant here used to promote the whole frame), and the vignette, which never changes, is built once"""
+    vig = _VIG.get(img.shape)
+    if vig is None:
+        v = (1 - 0.38 * np.clip(((gy - 0.47) * 1.3) ** 2, 0, 1)).astype(np.float32)
+        vig = _VIG[img.shape] = np.ascontiguousarray(np.broadcast_to(v.reshape(-1, 1, 1), img.shape))
+    img = np.ascontiguousarray(img, dtype=np.float32)
+    lum = cv2.transform(img, _THIRD)
+    shadows = cv2.min(cv2.max(1 - lum * 2.2, 0.0), 1.0)
+    highs = cv2.min(cv2.max(lum * 1.8 - 0.8, 0.0), 1.0)
+    tint = cv2.merge([shadows * float(a) + highs * float(b) for a, b in zip(_SHADOW, _HIGH)])
+    return cv2.multiply(cv2.add(img, tint), vig)
+
+
+_THIRD = np.full((1, 3), 1 / 3, np.float32)
+
+
+def screen(a, b):
+    """screen blend 1-(1-a)(1-b) = a + b - ab, on clipped layers"""
+    a = np.clip(a, 0, 1)                                  # (an OpenCV scalar would only touch channel 0)
+    b = np.clip(b, 0, 1)
+    return cv2.subtract(cv2.add(a, b), cv2.multiply(a, b))
+
+
+def to_u8(img):
+    return cv2.convertScaleAbs(img, alpha=255.0)        # saturates to 0..255, much faster than clip + astype
+
+
+_RADIAL = {}
+
+
+def radial(cx, cy, r, gx, gy):
+    """a soft round light; the same light (centre and size) is computed once and reused"""
+    key = (round(float(cx), 1), round(float(cy), 1), round(float(r), 1), gx.shape)
+    m = _RADIAL.get(key)
+    if m is None:
+        m = np.exp(-((gx - cx) ** 2 + (gy - cy) ** 2) / (2 * r * r)).astype(np.float32)
+        if len(_RADIAL) < 400:
+            _RADIAL[key] = m
+    return m
+
+
+def grain_bank(n=24, sigma=0.018, seed=1):
+    """film grain drawn once: frame i uses bank[i % n], so any chunk renders the same grain"""
+    r = np.random.default_rng(seed)
+    return [r.normal(0, sigma, (H // 2, W // 2, 1)).astype(np.float32).repeat(2, 0).repeat(2, 1) for _ in range(n)]
 
 
 def main(cenas, voz, trilha, out):
