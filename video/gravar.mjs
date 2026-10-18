@@ -55,6 +55,7 @@ if (!achou) throw new Error('pergunta da Austrália não apareceu');
 await pagina.waitForTimeout(3000); // o globo termina de voar até a Austrália
 
 await pagina.addScriptTag({ path: join(AQUI, 'overlay.js') });
+if (process.env.SEM_PERSONAGEM) await pagina.addStyleTag({ content: '#mv-mascote{display:none !important}' });
 await pagina.evaluate((d) => window.__preparar(d), dadosIcone);
 await pagina.waitForTimeout(800);
 
