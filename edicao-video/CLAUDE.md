@@ -10,6 +10,9 @@ the footage is someone else's). Talk to the user in PT-BR.
 - `poder.py`: 100% AI — AI paintings, AI narration, AI score; a 3D camera over the paintings.
 - `grandia.py` (+ `grandia_paralelo.sh`): 100% AI hymn, Dreamcast-era JRPG anime look. AI-animated clips
   (`CLIPES=dir` with v1..v7.mp4); the paintings under the 3D camera are only a fallback.
+- `adeus.py`: the same clips to the user's own recording of "A Deus" (lyrics from the Grandia Fandom, timed by
+  whisper with the lyrics as `initial_prompt`). Clips are reused: each also plays backwards (`vNr.mp4`, made once
+  with `ffmpeg -vf reverse`; never seek backwards frame by frame). Run with `SCRIPT=adeus grandia_paralelo.sh`.
 
 ## AI generation (ElevenLabs connector)
 - Images: always set `aspect_ratio: "9:16"`, `resolution: "2K"` on the node (`creative_add_flow_node` +
@@ -34,6 +37,11 @@ the footage is someone else's). Talk to the user in PT-BR.
   punch zoom, shake, chromatic split. Light and dust go in with a screen blend (`P.screen`), never a plain add
   (it washed out the climax).
 - Depth: gold dust and feathers in 3D (size ∝ 1/z, blur by depth); near layers pass in front of everything.
+- Big captions (128/164 px italic, 1–3 words per group) that fly in from depth and leave toward the camera read
+  better on a phone than long lines. Effects follow the meaning of each word (tear → ripples on the water,
+  storm → cold grade + 3D rain + lightning, light → rays breaking from above).
+- Bright clips (sky, angel) wash out fast: keep extra light low there and check those frames in the preview.
+- Whisper garbles sung words: pass the real lyrics as `initial_prompt`, then check doubtful onsets.
 - Preview first (`PREVIEW="t1,t2,…"`, contact sheet with ffmpeg tile), the full render only after it looks good.
 
 ## Speed (same image: checked PSNR ≥ 44.8 dB against the old output)
