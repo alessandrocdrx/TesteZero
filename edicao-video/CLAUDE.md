@@ -42,6 +42,15 @@ the footage is someone else's). Talk to the user in PT-BR.
   storm → cold grade + 3D rain + lightning, light → rays breaking from above).
 - Bright clips (sky, angel) wash out fast: keep extra light low there and check those frames in the preview.
 - Whisper garbles sung words: pass the real lyrics as `initial_prompt`, then check doubtful onsets.
+- Credits: check the ElevenLabs balance before planning a batch (a failed run reports `remaining_credits`);
+  an image at 9:16 2K high costs ~520 credits. When credits run out, triple the footage with what exists:
+  clips forward/backwards/mirrored with an offset and a push, and stills (a character key art) under the 3D
+  camera with a halo glow projected through the same homography.
+- Battle look: beams with a flickering white core from opposite corners that clash, shockwave rings in
+  perspective, light streaks rushing from a vanishing point, anamorphic flares, scrolling smoke at the edges.
+- Lyrics v2 (liked): 150/184 px, dark outline + white→gold gradient fill + glow, centred at y≈1250, long words
+  shrink to fit; above them, small, the pronunciation as sung. Credits still at the top (y≈262); the editor's
+  handle ("edição · @…") hops between central spots every ~2 s, after the intro title.
 - Preview first (`PREVIEW="t1,t2,…"`, contact sheet with ffmpeg tile), the full render only after it looks good.
 
 ## Speed (same image: checked PSNR ≥ 44.8 dB against the old output)
