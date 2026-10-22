@@ -17,7 +17,7 @@ RAIZ = os.path.dirname(HERE)
 W, H, FPS = 1080, 1920, 30  # Reels: 9:16
 DUR = float(os.environ.get('NATAL_DUR', 30.0))  # NATAL_DUR=5 para um teste curto
 LEAD = 0.5  # a narração entra meio segundo depois do início
-PASTA = os.path.join(RAIZ, "cache", "natal_v2")
+PASTA = os.path.join(RAIZ, "cache", "natal_v3")  # v2 + cenas 2 e 3 com os fogões reais
 CLIPES = [os.path.join(PASTA, f"c{i:02d}.mp4") for i in range(1, 7)]
 DUR_CLIPE = 5.041667
 NARRACAO = os.path.join(RAIZ, "cache", "natal", "narracao_natal.mp3")
