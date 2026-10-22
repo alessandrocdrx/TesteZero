@@ -2,19 +2,17 @@
 
 Etapas (uma só passada, sem versões extras):
   1. base.mp4: os 6 clipes (já 9:16) em sequência, 1080×1920, 30 fps, cortados em 30 s
-  2. stage1.mp4: objetos 3D (efeitos3d) sincronizados às palavras-chave + escurecimento e cartão final
-  3. legendas.ass: karaokê centralizado embaixo (palavra a palavra, pelo tempo da transcrição)
-  4. Ramalho_Natal_1080p.mp4: legendas queimadas + narração (atraso de 0,5 s) + créditos
+  2. stage1.mp4: fotos reais dos fogões em porta-retratos 3D (natal/fotos.py) nas palavras-chave + cartão final em tela cheia (natal/cartao.py)
+  3. legendas.ass: karaokê centralizado embaixo + faixa de contato fixa no alto
+  4. Ramalho_Natal_Reels.mp4: legendas queimadas + narração (atraso de 0,5 s) + créditos
 
 Uso: python3 natal/montar.py
 """
-import json, os, subprocess, sys
+import json, os, subprocess
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.dirname(HERE)
-sys.path.insert(0, RAIZ)
-import efeitos3d as e3  # noqa: E402
 
 W, H, FPS = 1080, 1920, 30  # Reels: 9:16
 DUR = float(os.environ.get('NATAL_DUR', 30.0))  # NATAL_DUR=5 para um teste curto
@@ -54,38 +52,53 @@ def palavra(txt, depois=0.0):
     raise KeyError(txt)
 
 
-# objeto 3D → (palavra-chave, malha(t), posição x, y relativos, tamanho em px)
-def _malhas():
-    return {
-        "fogão": (lambda t: e3.juntar(*e3.chama_viva(t, (255, 190, 30), 1.0, seed=1)), 0.20, 0.34, 430),
-        "conserto": (lambda t: e3.chave_inglesa(), 0.80, 0.34, 430),
-        "regulagem": (lambda t: e3.registro(), 0.22, 0.30, 380),
-        "Ramalho": (lambda t: e3.selo(t), 0.50, 0.24, 380),
-        "Azul": (lambda t: e3.anel_de_chamas(t), 0.80, 0.30, 420),
-        "Curitiba": (lambda t: e3.pino(), 0.20, 0.30, 380),
-        "WhatsApp": (lambda t: e3.telefone(), 0.50, 0.28, 420),
-        "Feliz": (lambda t: e3.faisca(), 0.50, 0.22, 300),
-    }
+FOTOS = os.path.join(RAIZ, "cache", "fotos_natal")  # fotos reais do cliente (fora do git)
+# foto: palavra que a chama e lado onde aparece (alterna para duas poderem conviver)
+QUADROS = [("fogão", "R"), ("revisão", "L"), ("conserto", "R"), ("regulagem", "L"),
+           ("limpeza", "R"), ("conversão", "L"), ("Azul", "R")]
+XL, XR, YQ, ESC_Q = 0.27, 0.73, 0.215, 0.80  # posição e escala dos porta-retratos
 
 
 def objetos():
-    """Lista de (início, duração, malha(t), lado, alvo x, alvo y, tam) com o tempo da palavra."""
-    cfg = {  # palavra: (malha, lado da personagem de onde nasce, alvo relativo, tamanho)
-        "fogão": ("fogão", "L", (0.20, 0.20), 612),
-        "conserto": ("conserto", "R", (0.80, 0.20), 612),
-        "regulagem": ("regulagem", "L", (0.20, 0.22), 578),
-        "Ramalho": ("Ramalho", "R", (0.50, 0.14), 544),
-        "Azul": ("Azul", "R", (0.78, 0.20), 612),
-        "Curitiba": ("Curitiba", "L", (0.20, 0.20), 578),
-        "WhatsApp": ("WhatsApp", "R", (0.50, 0.16), 646),
-        "Feliz": ("Feliz", "L", (0.30, 0.18), 510),
-    }
-    malhas = _malhas()
+    """Lista de (início, duração, sprite RGBA, lado, alvo x, alvo y) com o tempo da palavra."""
+    from PIL import Image
     res = []
-    for chave, (_, lado, (x, y), tam) in cfg.items():
+    for i, (chave, lado) in enumerate(QUADROS, 1):
         t0 = palavra(chave, depois=(palavra("Chama") - LEAD) if chave == "Azul" else 0.0)
-        res.append((t0, 1.8, malhas[chave][0], lado, int(x * W), int(y * H), tam))
-    return sorted(res, key=lambda o: o[0])
+        sp = np.asarray(Image.open(os.path.join(FOTOS, f"q_{i:02d}.png")).convert("RGBA"), np.float32) / 255.0
+        sp[..., :3] *= sp[..., 3:4]  # pré-multiplica para a perspectiva não criar bordas escuras
+        res.append([t0, 2.2, sp, lado, int((XL if lado == "L" else XR) * W), int(YQ * H)])
+    for k, o in enumerate(res):  # sai antes da próxima do mesmo lado entrar
+        prox = [p[0] for p in res[k + 1:] if p[3] == o[3]]
+        if prox:
+            o[1] = min(o[1], prox[0] - o[0])
+    return res
+
+
+def inclinar(sp, ang_y, ang_z, esc):
+    """Gira o porta-retrato em 3D (eixo vertical = ang_y, plano = ang_z) com perspectiva; RGBA float."""
+    import cv2
+    h, w = sp.shape[:2]
+    f = 1.6 * w  # distância focal: perspectiva suave
+    cy, sy, cz, sz = np.cos(ang_y), np.sin(ang_y), np.cos(ang_z), np.sin(ang_z)
+    src = np.float32([[0, 0], [w, 0], [w, h], [0, h]])
+    dst = []
+    for x, y in src:
+        X, Y = (x - w / 2), (y - h / 2)
+        X, Y = X * cz - Y * sz, X * sz + Y * cz
+        Z = X * sy
+        X = X * cy
+        k = f / (f + Z)
+        dst.append([X * k * esc, Y * k * esc])
+    dst = np.float32(dst)
+    lo = dst.min(0)
+    dst -= lo
+    tam = np.ceil(dst.max(0)).astype(int) + 1
+    M = cv2.getPerspectiveTransform(src, dst)
+    out = cv2.warpPerspective(sp, M, (int(tam[0]), int(tam[1])), flags=cv2.INTER_LINEAR, borderValue=(0, 0, 0, 0))
+    a = np.clip(out[..., 3:4], 1e-6, 1)
+    out[..., :3] = np.where(out[..., 3:4] > 1e-4, out[..., :3] / a, 0)
+    return out
 
 
 def pop(u):
@@ -110,7 +123,8 @@ def compor():
     import cv2
     import render_util as ru
     objs = objetos()
-    print("objetos:", [(round(o[0], 2), o[3]) for o in objs])
+    print("fotos:", [(round(o[0], 2), round(o[1], 2), o[3]) for o in objs])
+    cartao = cv2.cvtColor(cv2.imread(os.path.join(FOTOS, "cartao_final.png")), cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
     fundo = base()
     mascaras = {}
     dec = subprocess.Popen(["ffmpeg", "-v", "error", "-i", fundo, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
@@ -131,7 +145,7 @@ def compor():
         am = mascaras[c]
         m = cv2.resize(am[min(fq, len(am) - 1)], (W, H), interpolation=cv2.INTER_LINEAR).astype(np.float32) / 255.0
         original = img.copy()
-        for t0, dur, fn, lado, xt, yt, tam in objs:
+        for t0, dur, sp0, lado, xt, yt in objs:
             if not (t0 <= t < t0 + dur):
                 continue
             u = t - t0
@@ -146,14 +160,19 @@ def compor():
             e = pop(u / 0.7)  # sobe de trás da personagem até a posição final, crescendo
             x = xi + (xt - xi) * e
             y = yi + (yt - yi) * e
-            esc = (0.55 + 0.45 * e) * k
-            sp = e3.sprite(fn(u), e3.rot(0.1, 2.0 * u, 0.0), max(8, int(tam * esc)))
+            sinal = 1 if lado == "L" else -1  # vira de frente para o centro
+            ang_y = sinal * (0.9 * (1 - e) + 0.18 + 0.05 * np.sin(2.2 * u))
+            ang_z = sinal * (-0.05 + 0.025 * np.sin(1.7 * u + 0.5))
+            sp = inclinar(sp0, ang_y, ang_z, ESC_Q * (0.55 + 0.45 * e) * k)
             ru.blend(img, sp, x, y)
-            if e < 0.999:  # ainda "atrás" da personagem: ela tapa o objeto (profundidade real)
+            if e < 0.999:  # ainda "atrás" da personagem: ela tapa a foto (profundidade real)
                 img = img * (1 - m[..., None]) + original * m[..., None]
-        if t >= FIM_CARTAO:  # escurece o fundo no cartão final
-            a = min(1.0, (t - FIM_CARTAO) / 0.8)
-            img *= 1 - 0.65 * a
+        if t >= FIM_CARTAO:  # cartão final em tela cheia (entra com zoom suave)
+            a = pop((t - FIM_CARTAO) / 0.7)
+            z = 1.06 - 0.06 * a
+            cz = cv2.resize(cartao, None, fx=z, fy=z, interpolation=cv2.INTER_LINEAR)
+            oy, ox = (cz.shape[0] - H) // 2, (cz.shape[1] - W) // 2
+            img = img * (1 - a) + cz[oy:oy + H, ox:ox + W] * a
         enc.stdin.write((np.clip(img, 0, 1) * 255).astype(np.uint8).tobytes())
     enc.stdin.close(); enc.wait(); dec.wait()
     return os.path.join(HERE, "stage1.mp4")
@@ -170,6 +189,7 @@ def ass():
          "Style: Big,Liberation Sans,104,&H0030C8FF,&H0030C8FF,&H00401000,&H80000000,1,0,0,0,100,100,2,0,1,7,3,5,40,40,0,1",
          "Style: Num,Liberation Sans,70,&H00FFFFFF,&H00FFFFFF,&H00401000,&H80000000,1,0,0,0,100,100,2,0,1,6,3,5,40,40,0,1",
          "Style: Sub,Liberation Sans,58,&H00FFFFFF,&H00FFFFFF,&H00401000,&H80000000,1,0,0,0,100,100,1,0,1,4,2,5,40,40,0,1",
+         "Style: Bar,DejaVu Sans,34,&H00FFFFFF,&H00FFFFFF,&H50301008,&HFF000000,1,0,0,0,100,100,0,0,3,12,0,8,0,0,0,1",
          "Style: At,Liberation Sans,26,&HA0FFFFFF,&HA0FFFFFF,&H90000000,&H00000000,0,0,0,0,100,100,1,0,1,1,0,5,0,0,0,1",
          "", "[Events]", "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"]
 
@@ -199,12 +219,9 @@ def ass():
             partes.append(f"{{\\k{dur}}}{p['w']} ")
         L.append(f"Dialogue: 0,{ts(ini)},{ts(fim)},Leg,,0,0,0,,{''.join(partes).rstrip()}")
 
-    # cartão final (começa depois da última fala): técnico, WhatsApp e Facebook juntos
-    L.append(f"Dialogue: 2,{ts(FIM_CARTAO)},{ts(DUR)},Big,,0,0,0,,{{\\pos({W//2},{int(H*0.36)})}}RAMALHO FOGÕES")
-    L.append(f"Dialogue: 2,{ts(FIM_CARTAO + 0.6)},{ts(DUR)},Sub,,0,0,0,,{{\\pos({W//2},{int(H*0.47)})}}Técnico Marcos")
-    L.append(f"Dialogue: 2,{ts(FIM_CARTAO + 1.0)},{ts(DUR)},Num,,0,0,0,,{{\\pos({W//2},{int(H*0.56)})}}WhatsApp (41) 98485-1317")
-    L.append(f"Dialogue: 2,{ts(FIM_CARTAO + 1.4)},{ts(DUR)},Sub,,0,0,0,,{{\\pos({W//2},{int(H*0.64)})}}Curitiba e Região")
-    L.append(f"Dialogue: 2,{ts(FIM_CARTAO + 1.8)},{ts(DUR)},Sub,,0,0,0,,{{\\pos({W//2},{int(H*0.72)})}}Facebook: /ramalhofogoes")
+    # contato fixo desde o início, discreto no alto (o cartão final em tela cheia assume no fim)
+    L.append(f"Dialogue: 2,{ts(0)},{ts(FIM_CARTAO + 0.3)},Bar,,0,0,0,,{{\\pos({W//2},{int(H*0.045)})}}"
+             "Técnico Marco · WhatsApp {\\c&H28CEFF&}(41) 98485-1317{\\c&HFFFFFF&}\\NFacebook: /ramalhofogoes")
     # crédito do editor: pequeno, semitransparente, flutuando embaixo (não fica em destaque nem é coberto)
     for k in range(int(DUR)):
         y = H - 110 - (18 if k % 2 else 0)
