@@ -1,4 +1,4 @@
-"""Vídeo de Natal da Ramalho Fogões: 1920×1080, 30 s, 6 clipes Kling Omni + narração (Gabriel).
+"""Vídeo de Natal da Ramalho Fogões: 1080×1920 (Reels), 30 s, 6 clipes Kling Omni + narração (Gabriel).
 
 Etapas (uma só passada, sem versões extras):
   1. base.mp4: os 6 clipes em sequência, 1920×1080, 30 fps, cortados em 30 s
@@ -16,10 +16,11 @@ RAIZ = os.path.dirname(HERE)
 sys.path.insert(0, RAIZ)
 import efeitos3d as e3  # noqa: E402
 
-W, H, FPS, DUR = 1920, 1080, 30, 30.0
+W, H, FPS, DUR = 1080, 1920, 30, 30.0  # Reels: 9:16
 LEAD = 0.5  # a narração entra meio segundo depois do início
 CLIPES = [os.path.join(RAIZ, "cache", "natal", f"c{i:02d}.mp4") for i in range(1, 7)]
 NARRACAO = os.path.join(RAIZ, "cache", "natal", "narracao_natal.mp3")
+MUSICA = os.path.join(RAIZ, "cache", "natal", "musica_natal.mp3")
 PALAVRAS = json.load(open(os.path.join(RAIZ, "cache", "natal", "narracao_natal.json"), encoding="utf-8"))
 FIM_CARTAO = 24.4  # cartão final começa aqui (a narração termina em ~22,7 s)
 
@@ -36,7 +37,7 @@ def base():
             f.write(f"file '{c}'\n")
     out = os.path.join(HERE, "base.mp4")
     run(["ffmpeg", "-y", "-v", "error", "-f", "concat", "-safe", "0", "-i", lista,
-         "-vf", f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},fps={FPS},format=yuv420p",
+         "-vf", f"scale=-2:{H},crop={W}:{H},fps={FPS},format=yuv420p",  # 16:9 → 9:16 pelo centro
          "-t", str(DUR), "-an", "-c:v", "libx264", "-crf", "16", "-preset", "medium", out])
     return out
 
@@ -119,11 +120,11 @@ def ass():
          "[V4+ Styles]",
          "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, "
          "Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
-         "Style: Leg,Liberation Sans,64,&H0030C8FF,&H00FFFFFF,&H00301A0A,&H80000000,1,0,0,0,100,100,0,0,1,5,2,2,160,160,70,1",
-         "Style: Big,Liberation Sans,96,&H0030C8FF,&H0030C8FF,&H00401000,&H80000000,1,0,0,0,100,100,2,0,1,7,3,5,40,40,0,1",
-         "Style: Num,Liberation Sans,84,&H00FFFFFF,&H00FFFFFF,&H00401000,&H80000000,1,0,0,0,100,100,2,0,1,6,3,5,40,40,0,1",
-         "Style: Sub,Liberation Sans,50,&H00FFFFFF,&H00FFFFFF,&H00401000,&H80000000,1,0,0,0,100,100,1,0,1,4,2,5,40,40,0,1",
-         "Style: At,Liberation Sans,30,&H00FFFFFF,&H00FFFFFF,&H60000000,&H00000000,1,0,0,0,100,100,1,0,1,2,0,2,0,0,40,1",
+         "Style: Leg,Liberation Sans,84,&H0030C8FF,&H00FFFFFF,&H00301A0A,&H80000000,1,0,0,0,100,100,0,0,1,6,2,2,110,110,430,1",
+         "Style: Big,Liberation Sans,104,&H0030C8FF,&H0030C8FF,&H00401000,&H80000000,1,0,0,0,100,100,2,0,1,7,3,5,40,40,0,1",
+         "Style: Num,Liberation Sans,96,&H00FFFFFF,&H00FFFFFF,&H00401000,&H80000000,1,0,0,0,100,100,2,0,1,6,3,5,40,40,0,1",
+         "Style: Sub,Liberation Sans,58,&H00FFFFFF,&H00FFFFFF,&H00401000,&H80000000,1,0,0,0,100,100,1,0,1,4,2,5,40,40,0,1",
+         "Style: At,Liberation Sans,26,&HA0FFFFFF,&HA0FFFFFF,&H90000000,&H00000000,0,0,0,0,100,100,1,0,1,1,0,5,0,0,0,1",
          "", "[Events]", "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"]
 
     def ts(s):
@@ -148,22 +149,28 @@ def ass():
             partes.append(f"{{\\k{dur}}}{p['w']} ")
         L.append(f"Dialogue: 0,{ts(ini)},{ts(fim)},Leg,,0,0,0,,{''.join(partes).rstrip()}")
 
-    # cartão final (começa depois da última fala)
-    fim = f"{ts(FIM_CARTAO + 0.6)}"
-    L.append(f"Dialogue: 2,{fim},{ts(DUR)},Big,,0,0,0,,{{\\pos({W//2},{int(H*0.30)})}}RAMALHO FOGÕES")
-    L.append(f"Dialogue: 2,{ts(FIM_CARTAO + 1.2)},{ts(DUR)},Num,,0,0,0,,{{\\pos({W//2},{int(H*0.50)})}}(41) 98485-1317")
-    L.append(f"Dialogue: 2,{ts(FIM_CARTAO + 1.6)},{ts(DUR)},Sub,,0,0,0,,{{\\pos({W//2},{int(H*0.61)})}}Curitiba e Região")
-    L.append(f"Dialogue: 2,{ts(FIM_CARTAO + 2.0)},{ts(DUR)},Sub,,0,0,0,,{{\\pos({W//2},{int(H*0.70)})}}Facebook: /ramalhofogoes")
-    # crédito do editor: embaixo, centralizado, o tempo todo
-    L.append(f"Dialogue: 3,{ts(0)},{ts(DUR)},At,,0,0,0,,Edição: @alessandrocdrx")
+    # cartão final (começa depois da última fala): técnico, WhatsApp e Facebook juntos
+    L.append(f"Dialogue: 2,{ts(FIM_CARTAO)},{ts(DUR)},Big,,0,0,0,,{{\\pos({W//2},{int(H*0.36)})}}RAMALHO FOGÕES")
+    L.append(f"Dialogue: 2,{ts(FIM_CARTAO + 0.6)},{ts(DUR)},Sub,,0,0,0,,{{\\pos({W//2},{int(H*0.47)})}}Técnico Marcos")
+    L.append(f"Dialogue: 2,{ts(FIM_CARTAO + 1.0)},{ts(DUR)},Num,,0,0,0,,{{\\pos({W//2},{int(H*0.56)})}}WhatsApp (41) 98485-1317")
+    L.append(f"Dialogue: 2,{ts(FIM_CARTAO + 1.4)},{ts(DUR)},Sub,,0,0,0,,{{\\pos({W//2},{int(H*0.64)})}}Curitiba e Região")
+    L.append(f"Dialogue: 2,{ts(FIM_CARTAO + 1.8)},{ts(DUR)},Sub,,0,0,0,,{{\\pos({W//2},{int(H*0.72)})}}Facebook: /ramalhofogoes")
+    # crédito do editor: pequeno, semitransparente, flutuando embaixo (não fica em destaque nem é coberto)
+    for k in range(int(DUR)):
+        y = H - 110 - (18 if k % 2 else 0)
+        L.append(f"Dialogue: 3,{ts(k)},{ts(k + 1)},At,,0,0,0,,{{\\pos({W//2},{y})}}Edição: @alessandrocdrx")
     open(path, "w", encoding="utf-8").write("\n".join(L) + "\n")
     return path
 
 
 def final(stage, legendas):
-    out = os.path.join(RAIZ, "Ramalho_Natal_1080p.mp4")
-    run(["ffmpeg", "-y", "-v", "error", "-i", stage, "-i", NARRACAO,
-         "-filter_complex", f"[0:v]ass={legendas}[v];[1:a]adelay={int(LEAD*1000)}:all=1,apad,atrim=0:{DUR}[a]",
+    out = os.path.join(RAIZ, "Ramalho_Natal_Reels.mp4")
+    run(["ffmpeg", "-y", "-v", "error", "-i", stage, "-i", NARRACAO, "-stream_loop", "-1", "-i", MUSICA,
+         "-filter_complex",
+         f"[0:v]ass={legendas}[v];"
+         f"[1:a]adelay={int(LEAD*1000)}:all=1,apad,atrim=0:{DUR}[nar];"
+         f"[2:a]atrim=0:{DUR},volume=0.22,afade=t=out:st={DUR - 3.5}:d=3.5[mus];"
+         f"[nar][mus]amix=inputs=2:duration=first:weights=1 1:normalize=0[a]",
          "-map", "[v]", "-map", "[a]", "-t", str(DUR), "-c:v", "libx264", "-crf", "18", "-preset", "medium",
          "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", out])
     return out

@@ -1,16 +1,16 @@
 [Script Info]
 ScriptType: v4.00+
-PlayResX: 1920
-PlayResY: 1080
+PlayResX: 1080
+PlayResY: 1920
 WrapStyle: 2
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Leg,Liberation Sans,64,&H0030C8FF,&H00FFFFFF,&H00301A0A,&H80000000,1,0,0,0,100,100,0,0,1,5,2,2,160,160,70,1
-Style: Big,Liberation Sans,96,&H0030C8FF,&H0030C8FF,&H00401000,&H80000000,1,0,0,0,100,100,2,0,1,7,3,5,40,40,0,1
-Style: Num,Liberation Sans,84,&H00FFFFFF,&H00FFFFFF,&H00401000,&H80000000,1,0,0,0,100,100,2,0,1,6,3,5,40,40,0,1
-Style: Sub,Liberation Sans,50,&H00FFFFFF,&H00FFFFFF,&H00401000,&H80000000,1,0,0,0,100,100,1,0,1,4,2,5,40,40,0,1
-Style: At,Liberation Sans,30,&H00FFFFFF,&H00FFFFFF,&H60000000,&H00000000,1,0,0,0,100,100,1,0,1,2,0,2,0,0,40,1
+Style: Leg,Liberation Sans,84,&H0030C8FF,&H00FFFFFF,&H00301A0A,&H80000000,1,0,0,0,100,100,0,0,1,6,2,2,110,110,430,1
+Style: Big,Liberation Sans,104,&H0030C8FF,&H0030C8FF,&H00401000,&H80000000,1,0,0,0,100,100,2,0,1,7,3,5,40,40,0,1
+Style: Num,Liberation Sans,96,&H00FFFFFF,&H00FFFFFF,&H00401000,&H80000000,1,0,0,0,100,100,2,0,1,6,3,5,40,40,0,1
+Style: Sub,Liberation Sans,58,&H00FFFFFF,&H00FFFFFF,&H00401000,&H80000000,1,0,0,0,100,100,1,0,1,4,2,5,40,40,0,1
+Style: At,Liberation Sans,26,&HA0FFFFFF,&HA0FFFFFF,&H90000000,&H00000000,0,0,0,0,100,100,1,0,1,1,0,5,0,0,0,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -28,8 +28,38 @@ Dialogue: 0,0:00:14.34,0:00:16.09,Leg,,0,0,0,,{\k46}Atendemos {\k56}Curitiba {\k
 Dialogue: 0,0:00:16.36,0:00:18.91,Leg,,0,0,0,,{\k16}Chama {\k12}no {\k44}WhatsApp {\k78}41 {\k90}9
 Dialogue: 0,0:00:18.76,0:00:21.47,Leg,,0,0,0,,{\k134}8485 {\k122}1317.
 Dialogue: 0,0:00:21.68,0:00:22.63,Leg,,0,0,0,,{\k32}Feliz {\k48}Natal!
-Dialogue: 2,0:00:25.00,0:00:30.00,Big,,0,0,0,,{\pos(960,324)}RAMALHO FOGÕES
-Dialogue: 2,0:00:25.60,0:00:30.00,Num,,0,0,0,,{\pos(960,540)}(41) 98485-1317
-Dialogue: 2,0:00:26.00,0:00:30.00,Sub,,0,0,0,,{\pos(960,658)}Curitiba e Região
-Dialogue: 2,0:00:26.40,0:00:30.00,Sub,,0,0,0,,{\pos(960,756)}Facebook: /ramalhofogoes
-Dialogue: 3,0:00:00.00,0:00:30.00,At,,0,0,0,,Edição: @alessandrocdrx
+Dialogue: 2,0:00:24.40,0:00:30.00,Big,,0,0,0,,{\pos(540,691)}RAMALHO FOGÕES
+Dialogue: 2,0:00:25.00,0:00:30.00,Sub,,0,0,0,,{\pos(540,902)}Técnico Marcos
+Dialogue: 2,0:00:25.40,0:00:30.00,Num,,0,0,0,,{\pos(540,1075)}WhatsApp (41) 98485-1317
+Dialogue: 2,0:00:25.80,0:00:30.00,Sub,,0,0,0,,{\pos(540,1228)}Curitiba e Região
+Dialogue: 2,0:00:26.20,0:00:30.00,Sub,,0,0,0,,{\pos(540,1382)}Facebook: /ramalhofogoes
+Dialogue: 3,0:00:00.00,0:00:01.00,At,,0,0,0,,{\pos(540,1810)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:01.00,0:00:02.00,At,,0,0,0,,{\pos(540,1792)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:02.00,0:00:03.00,At,,0,0,0,,{\pos(540,1810)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:03.00,0:00:04.00,At,,0,0,0,,{\pos(540,1792)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:04.00,0:00:05.00,At,,0,0,0,,{\pos(540,1810)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:05.00,0:00:06.00,At,,0,0,0,,{\pos(540,1792)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:06.00,0:00:07.00,At,,0,0,0,,{\pos(540,1810)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:07.00,0:00:08.00,At,,0,0,0,,{\pos(540,1792)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:08.00,0:00:09.00,At,,0,0,0,,{\pos(540,1810)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:09.00,0:00:10.00,At,,0,0,0,,{\pos(540,1792)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:10.00,0:00:11.00,At,,0,0,0,,{\pos(540,1810)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:11.00,0:00:12.00,At,,0,0,0,,{\pos(540,1792)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:12.00,0:00:13.00,At,,0,0,0,,{\pos(540,1810)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:13.00,0:00:14.00,At,,0,0,0,,{\pos(540,1792)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:14.00,0:00:15.00,At,,0,0,0,,{\pos(540,1810)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:15.00,0:00:16.00,At,,0,0,0,,{\pos(540,1792)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:16.00,0:00:17.00,At,,0,0,0,,{\pos(540,1810)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:17.00,0:00:18.00,At,,0,0,0,,{\pos(540,1792)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:18.00,0:00:19.00,At,,0,0,0,,{\pos(540,1810)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:19.00,0:00:20.00,At,,0,0,0,,{\pos(540,1792)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:20.00,0:00:21.00,At,,0,0,0,,{\pos(540,1810)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:21.00,0:00:22.00,At,,0,0,0,,{\pos(540,1792)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:22.00,0:00:23.00,At,,0,0,0,,{\pos(540,1810)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:23.00,0:00:24.00,At,,0,0,0,,{\pos(540,1792)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:24.00,0:00:25.00,At,,0,0,0,,{\pos(540,1810)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:25.00,0:00:26.00,At,,0,0,0,,{\pos(540,1792)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:26.00,0:00:27.00,At,,0,0,0,,{\pos(540,1810)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:27.00,0:00:28.00,At,,0,0,0,,{\pos(540,1792)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:28.00,0:00:29.00,At,,0,0,0,,{\pos(540,1810)}Edição: @alessandrocdrx
+Dialogue: 3,0:00:29.00,0:00:30.00,At,,0,0,0,,{\pos(540,1792)}Edição: @alessandrocdrx
