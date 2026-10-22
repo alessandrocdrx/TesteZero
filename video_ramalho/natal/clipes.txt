@@ -1,6 +1,0 @@
-file '/home/user/TesteZero/video_ramalho/cache/natal/c01.mp4'
-file '/home/user/TesteZero/video_ramalho/cache/natal/c02.mp4'
-file '/home/user/TesteZero/video_ramalho/cache/natal/c03.mp4'
-file '/home/user/TesteZero/video_ramalho/cache/natal/c04.mp4'
-file '/home/user/TesteZero/video_ramalho/cache/natal/c05.mp4'
-file '/home/user/TesteZero/video_ramalho/cache/natal/c06.mp4'
