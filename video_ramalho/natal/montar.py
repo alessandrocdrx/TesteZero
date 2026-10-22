@@ -54,8 +54,8 @@ def palavra(txt, depois=0.0):
 
 FOTOS = os.path.join(RAIZ, "cache", "fotos_natal")  # fotos reais do cliente (fora do git)
 # foto: palavra que a chama e lado onde aparece (alterna para duas poderem conviver)
-QUADROS = [("fogão", "R"), ("revisão", "L"), ("conserto", "R"), ("regulagem", "L"),
-           ("limpeza", "R"), ("conversão", "L"), ("Azul", "R")]
+# vazio: os fogões reais agora estão dentro das cenas 2 e 3 (Kling com as fotos como referência)
+QUADROS = []  # ex.: [("fogão", "R"), ("revisão", "L"), ("conserto", "R"), ...]
 XL, XR, YQ, ESC_Q = 0.27, 0.73, 0.215, 0.80  # posição e escala dos porta-retratos
 
 
