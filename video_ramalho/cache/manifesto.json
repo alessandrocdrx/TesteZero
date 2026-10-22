@@ -472,6 +472,18 @@
       "arquivo": "profund_cena03.npz",
       "sha256": "7445bd842ef9d36a0db9657da95b911a25e02e2761d5bdb3957a504fb22f3a22",
       "criado": "2026-10-17 19:20:56"
+    },
+    "palavras_narracao_natal": {
+      "chave": "dfff2a97901a922c",
+      "params": {
+        "audio_sha256": "228b8b6efc3cf8be0874faf3b4092ad04179b71bff470858a08b8908d7b75ca1",
+        "modelo": "whisper-medium",
+        "lingua": "pt"
+      },
+      "seed": null,
+      "arquivo": "natal/narracao_natal.json",
+      "sha256": "be955c1717b774e507cdf3c0b6a0496ff1a416d68c524139d632034cf733de13",
+      "criado": "2026-10-22 00:09:05"
     }
   }
 }
