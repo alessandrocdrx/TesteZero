@@ -1,7 +1,7 @@
 """Vídeo de Natal da Ramalho Fogões: 1080×1920 (Reels), 30 s, 6 clipes Kling Omni + narração (Gabriel).
 
 Etapas (uma só passada, sem versões extras):
-  1. base.mp4: os 6 clipes em sequência, 1920×1080, 30 fps, cortados em 30 s
+  1. base.mp4: os 6 clipes (já 9:16) em sequência, 1080×1920, 30 fps, cortados em 30 s
   2. stage1.mp4: objetos 3D (efeitos3d) sincronizados às palavras-chave + escurecimento e cartão final
   3. legendas.ass: karaokê centralizado embaixo (palavra a palavra, pelo tempo da transcrição)
   4. Ramalho_Natal_1080p.mp4: legendas queimadas + narração (atraso de 0,5 s) + créditos
@@ -16,9 +16,12 @@ RAIZ = os.path.dirname(HERE)
 sys.path.insert(0, RAIZ)
 import efeitos3d as e3  # noqa: E402
 
-W, H, FPS, DUR = 1080, 1920, 30, 30.0  # Reels: 9:16
+W, H, FPS = 1080, 1920, 30  # Reels: 9:16
+DUR = float(os.environ.get('NATAL_DUR', 30.0))  # NATAL_DUR=5 para um teste curto
 LEAD = 0.5  # a narração entra meio segundo depois do início
-CLIPES = [os.path.join(RAIZ, "cache", "natal", f"c{i:02d}.mp4") for i in range(1, 7)]
+PASTA = os.path.join(RAIZ, "cache", "natal_v2")
+CLIPES = [os.path.join(PASTA, f"c{i:02d}.mp4") for i in range(1, 7)]
+DUR_CLIPE = 5.041667
 NARRACAO = os.path.join(RAIZ, "cache", "natal", "narracao_natal.mp3")
 MUSICA = os.path.join(RAIZ, "cache", "natal", "musica_natal.mp3")
 PALAVRAS = json.load(open(os.path.join(RAIZ, "cache", "natal", "narracao_natal.json"), encoding="utf-8"))
@@ -30,14 +33,14 @@ def run(cmd):
 
 
 def base():
-    """Concatena os 6 clipes em 1920×1080 e corta em 30 s."""
+    """Concatena os 6 clipes 9:16 e corta em 30 s."""
     lista = os.path.join(HERE, "clipes.txt")
     with open(lista, "w") as f:
         for c in CLIPES:
             f.write(f"file '{c}'\n")
     out = os.path.join(HERE, "base.mp4")
     run(["ffmpeg", "-y", "-v", "error", "-f", "concat", "-safe", "0", "-i", lista,
-         "-vf", f"scale=-2:{H},crop={W}:{H},fps={FPS},format=yuv420p",  # 16:9 → 9:16 pelo centro
+         "-vf", f"scale={W}:{H},fps={FPS},format=yuv420p",  # clipes já saem em 9:16
          "-t", str(DUR), "-an", "-c:v", "libx264", "-crf", "16", "-preset", "medium", out])
     return out
 
@@ -66,25 +69,50 @@ def _malhas():
 
 
 def objetos():
-    """Lista de (início, duração, malha(t), x, y, tam, rotação) com o tempo da palavra ±0 s."""
+    """Lista de (início, duração, malha(t), lado, alvo x, alvo y, tam) com o tempo da palavra."""
+    cfg = {  # palavra: (malha, lado da personagem de onde nasce, alvo relativo, tamanho)
+        "fogão": ("fogão", "L", (0.20, 0.20), 612),
+        "conserto": ("conserto", "R", (0.80, 0.20), 612),
+        "regulagem": ("regulagem", "L", (0.20, 0.22), 578),
+        "Ramalho": ("Ramalho", "R", (0.50, 0.14), 544),
+        "Azul": ("Azul", "R", (0.78, 0.20), 612),
+        "Curitiba": ("Curitiba", "L", (0.20, 0.20), 578),
+        "WhatsApp": ("WhatsApp", "R", (0.50, 0.16), 646),
+        "Feliz": ("Feliz", "L", (0.30, 0.18), 510),
+    }
+    malhas = _malhas()
     res = []
-    for chave, (fn, x, y, tam) in _malhas().items():
+    for chave, (_, lado, (x, y), tam) in cfg.items():
         t0 = palavra(chave, depois=(palavra("Chama") - LEAD) if chave == "Azul" else 0.0)
-        res.append((t0, 1.6, fn, int(x * W), int(y * H), tam))
+        res.append((t0, 1.8, malhas[chave][0], lado, int(x * W), int(y * H), tam))
     return sorted(res, key=lambda o: o[0])
 
 
 def pop(u):
-    """Entrada com leve estouro e saída suave, em 0..1."""
     u = min(max(u, 0.0), 1.0)
-    return 1 - (1 - u) ** 3 if u < 1 else 1.0
+    return 1 - (1 - u) ** 3
+
+
+def cabeca(m, lado):
+    """Topo da cabeça e x do centro da personagem da esquerda ou da direita (máscara 0..1, H×W)."""
+    meio = m.shape[1] // 2
+    reg = m[:, :meio] if lado == "L" else m[:, meio:]
+    linhas = np.nonzero((reg > 0.5).any(1))[0]
+    if not len(linhas):
+        return None
+    y0 = int(linhas.min())
+    cols = np.nonzero((reg[y0:y0 + 60] > 0.5).any(0))[0]
+    x = int(cols.mean()) + (0 if lado == "L" else meio)
+    return x, y0
 
 
 def compor():
-    import render_util as ru  # blend simples (mesma lógica de render.blend_sprite)
+    import cv2
+    import render_util as ru
     objs = objetos()
-    print("objetos:", [(round(o[0], 2), o[3], o[4]) for o in objs])
+    print("objetos:", [(round(o[0], 2), o[3]) for o in objs])
     fundo = base()
+    mascaras = {}
     dec = subprocess.Popen(["ffmpeg", "-v", "error", "-i", fundo, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
                            stdout=subprocess.PIPE)
     enc = subprocess.Popen(["ffmpeg", "-y", "-v", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
@@ -97,17 +125,35 @@ def compor():
             break
         t = i / FPS
         img = np.frombuffer(raw, np.uint8).reshape(H, W, 3).astype(np.float32) / 255.0
-        for t0, dur, fn, x, y, tam in objs:
-            if t0 <= t < t0 + dur:
-                u = (t - t0) / 0.35
-                k = pop(u) * (1.0 if t - t0 < dur - 0.3 else max(0.0, (t0 + dur - t) / 0.3))
-                if k <= 0.01:
-                    continue
-                sp = e3.sprite(fn(t - t0), e3.rot(0.1, 2.0 * (t - t0), 0.0), max(8, int(tam * k)))
-                ru.blend(img, sp, x, y)
+        c = min(5, int(t / DUR_CLIPE)); fq = int(round((t - c * DUR_CLIPE) * 24))  # clipes a 24 quadros/s
+        if c not in mascaras:
+            mascaras[c] = np.load(os.path.join(PASTA, f"mascaras_c{c + 1:02d}.npz"))["a"]
+        am = mascaras[c]
+        m = cv2.resize(am[min(fq, len(am) - 1)], (W, H), interpolation=cv2.INTER_LINEAR).astype(np.float32) / 255.0
+        original = img.copy()
+        for t0, dur, fn, lado, xt, yt, tam in objs:
+            if not (t0 <= t < t0 + dur):
+                continue
+            u = t - t0
+            k = pop(u / 0.45) * (1.0 if u < dur - 0.3 else max(0.0, (t0 + dur - t) / 0.3))
+            if k <= 0.01:
+                continue
+            ini = cabeca(cv2.resize(am[min(fq, len(am) - 1)], (W // 4, H // 4)).astype(np.float32) / 255.0, lado)
+            if ini:
+                xi, yi = ini[0] * 4, ini[1] * 4 + 120
+            else:
+                xi, yi = xt, yt + 200
+            e = pop(u / 0.7)  # sobe de trás da personagem até a posição final, crescendo
+            x = xi + (xt - xi) * e
+            y = yi + (yt - yi) * e
+            esc = (0.55 + 0.45 * e) * k
+            sp = e3.sprite(fn(u), e3.rot(0.1, 2.0 * u, 0.0), max(8, int(tam * esc)))
+            ru.blend(img, sp, x, y)
+            if e < 0.999:  # ainda "atrás" da personagem: ela tapa o objeto (profundidade real)
+                img = img * (1 - m[..., None]) + original * m[..., None]
         if t >= FIM_CARTAO:  # escurece o fundo no cartão final
             a = min(1.0, (t - FIM_CARTAO) / 0.8)
-            img *= 1 - 0.55 * a
+            img *= 1 - 0.65 * a
         enc.stdin.write((np.clip(img, 0, 1) * 255).astype(np.uint8).tobytes())
     enc.stdin.close(); enc.wait(); dec.wait()
     return os.path.join(HERE, "stage1.mp4")
@@ -122,7 +168,7 @@ def ass():
          "Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
          "Style: Leg,Liberation Sans,84,&H0030C8FF,&H00FFFFFF,&H00301A0A,&H80000000,1,0,0,0,100,100,0,0,1,6,2,2,110,110,430,1",
          "Style: Big,Liberation Sans,104,&H0030C8FF,&H0030C8FF,&H00401000,&H80000000,1,0,0,0,100,100,2,0,1,7,3,5,40,40,0,1",
-         "Style: Num,Liberation Sans,96,&H00FFFFFF,&H00FFFFFF,&H00401000,&H80000000,1,0,0,0,100,100,2,0,1,6,3,5,40,40,0,1",
+         "Style: Num,Liberation Sans,70,&H00FFFFFF,&H00FFFFFF,&H00401000,&H80000000,1,0,0,0,100,100,2,0,1,6,3,5,40,40,0,1",
          "Style: Sub,Liberation Sans,58,&H00FFFFFF,&H00FFFFFF,&H00401000,&H80000000,1,0,0,0,100,100,1,0,1,4,2,5,40,40,0,1",
          "Style: At,Liberation Sans,26,&HA0FFFFFF,&HA0FFFFFF,&H90000000,&H00000000,0,0,0,0,100,100,1,0,1,1,0,5,0,0,0,1",
          "", "[Events]", "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"]
@@ -132,8 +178,12 @@ def ass():
         return f"{h}:{m:02d}:{s % 60:05.2f}"
 
     # frases: quebra em pontuação ou a cada 5 palavras
+    palavras = list(PALAVRAS)
+    iw = next(k for k, p in enumerate(palavras) if p["w"].strip(".,?!:").lower() == "whatsapp")
+    fimnum = next(k for k in range(iw + 1, len(palavras)) if palavras[k]["w"].strip(".,?!:") == "1317")
+    palavras[iw + 1:fimnum + 1] = [{"w": "(41) 98485-1317.", "s": palavras[iw + 1]["s"], "e": palavras[fimnum]["e"]}]
     grupos, atual = [], []
-    for p in PALAVRAS:
+    for p in palavras:
         atual.append(p)
         if p["w"].rstrip().endswith((".", "!", "?", ",")) or len(atual) >= 5:
             grupos.append(atual); atual = []
@@ -164,7 +214,7 @@ def ass():
 
 
 def final(stage, legendas):
-    out = os.path.join(RAIZ, "Ramalho_Natal_Reels.mp4")
+    out = os.environ.get("NATAL_SAIDA", os.path.join(RAIZ, "Ramalho_Natal_Reels.mp4"))
     run(["ffmpeg", "-y", "-v", "error", "-i", stage, "-i", NARRACAO, "-stream_loop", "-1", "-i", MUSICA,
          "-filter_complex",
          f"[0:v]ass={legendas}[v];"
