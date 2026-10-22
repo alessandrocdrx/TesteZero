@@ -185,7 +185,7 @@ def ass():
     grupos, atual = [], []
     for p in palavras:
         atual.append(p)
-        if p["w"].rstrip().endswith((".", "!", "?", ",")) or len(atual) >= 5:
+        if p["w"].rstrip().endswith((".", "!", "?", ",")) or len(atual) >= 5 or p["w"].strip(".,?!:").lower() == "whatsapp":
             grupos.append(atual); atual = []
     if atual:
         grupos.append(atual)
